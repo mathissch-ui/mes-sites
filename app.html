@@ -214,7 +214,9 @@
     margin: 4px 0 6px;
   }
   .account-dropdown-item {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
     text-align: left;
     background: transparent;
@@ -224,8 +226,24 @@
     font-size: 13px;
     font-weight: 500;
   }
+  .account-dropdown-item svg { width: 15px; height: 15px; flex-shrink: 0; }
   .account-dropdown-item:hover { background: var(--bg-card-hover); }
   .account-dropdown-item.danger { color: var(--danger); }
+  .account-plan-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .account-plan-row b { color: var(--text); }
+  .account-plan-link {
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .account-plan-link:hover { text-decoration: underline; }
 
   .category {
     margin-bottom: 36px;
@@ -538,10 +556,6 @@
         <div class="header-actions">
           <input type="text" id="search" placeholder="Rechercher...">
           <button class="btn-primary" id="add-btn">+ Ajouter un lien</button>
-          <button type="button" class="theme-toggle" id="theme-toggle-dashboard-btn" title="Changer de thème" aria-label="Changer de thème">
-            <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-            <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          </button>
           <div class="account-menu">
             <button class="account-btn" id="account-btn" title="Compte"><span id="account-avatar"></span></button>
             <div class="account-dropdown" id="account-dropdown">
@@ -553,7 +567,19 @@
                 </div>
               </div>
               <div class="account-dropdown-divider"></div>
+              <div class="account-plan-row">
+                <span>Plan <b>Gratuit</b></span>
+                <a href="index.html#pricing" class="account-plan-link">Voir les tarifs</a>
+              </div>
+              <div class="account-dropdown-divider"></div>
+              <button type="button" class="account-dropdown-item" id="dropdown-theme-toggle-btn">
+                <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                <span id="dropdown-theme-label">Thème sombre</span>
+              </button>
               <button type="button" class="account-dropdown-item" id="reset-password-btn">Réinitialiser le mot de passe</button>
+              <div class="account-dropdown-divider"></div>
+              <button type="button" class="account-dropdown-item danger" id="delete-account-btn">Supprimer mon compte</button>
               <button type="button" class="account-dropdown-item danger" id="logout-btn">Déconnexion</button>
             </div>
           </div>
@@ -580,6 +606,18 @@
       <div class="modal-actions">
         <button type="button" class="btn-ghost" id="rename-category-cancel-btn">Annuler</button>
         <button type="button" class="btn-primary" id="rename-category-save-btn">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="delete-account-overlay">
+    <div class="modal">
+      <h2>Supprimer mon compte</h2>
+      <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 8px;">Cette action est <b>définitive</b>. Votre compte et tous vos liens seront supprimés pour toujours.</p>
+      <p id="delete-account-error" style="color: var(--danger); font-size: 13px; margin: 0;"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="delete-account-cancel-btn">Annuler</button>
+        <button type="button" class="btn-primary" id="delete-account-confirm-btn" style="background: var(--danger);">Supprimer définitivement</button>
       </div>
     </div>
   </div>
@@ -631,10 +669,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword,
   createUserWithEmailAndPassword, signOut, sendPasswordResetEmail,
-  GoogleAuthProvider, signInWithPopup
+  GoogleAuthProvider, signInWithPopup, deleteUser
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, doc, onSnapshot, setDoc
+  getFirestore, doc, onSnapshot, setDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -752,6 +790,106 @@ function moveLink(sourceId, targetCategory, beforeLinkId) {
   render();
 }
 
+function toggleFavorite(id) {
+  const link = links.find(l => l.id === id);
+  if (!link) return;
+  link.favorite = !link.favorite;
+  saveLinks(links);
+  render();
+}
+
+function createCard(link, opts) {
+  opts = opts || {};
+  const card = document.createElement('a');
+  card.className = 'card';
+  card.href = link.url;
+  card.target = '_blank';
+  card.rel = 'noopener noreferrer';
+
+  if (opts.draggable) {
+    card.draggable = true;
+    card.addEventListener('dragstart', () => {
+      draggedId = link.id;
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    card.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (opts.grid) opts.grid.classList.remove('drag-over');
+      moveLink(draggedId, opts.category, link.id);
+    });
+  }
+
+  const img = document.createElement('img');
+  img.src = faviconUrl(link.url);
+  img.alt = '';
+  card.appendChild(img);
+
+  const name = document.createElement('div');
+  name.className = 'card-name';
+  name.textContent = link.name;
+  card.appendChild(name);
+
+  const actions = document.createElement('div');
+  actions.className = 'card-actions';
+
+  const editBtn = document.createElement('button');
+  editBtn.textContent = '✎';
+  editBtn.title = 'Modifier';
+  editBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openModal(link);
+  });
+
+  const starBtn = document.createElement('button');
+  starBtn.textContent = link.favorite ? '★' : '☆';
+  starBtn.title = link.favorite ? 'Retirer des favoris' : 'Ajouter aux favoris';
+  if (link.favorite) starBtn.style.color = '#f5c344';
+  starBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(link.id);
+  });
+
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent = '⧉';
+  copyBtn.title = 'Copier l\'URL';
+  copyBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    copyToClipboard(link.url);
+    copyBtn.textContent = '✓';
+    setTimeout(() => { copyBtn.textContent = '⧉'; }, 1200);
+  });
+
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '×';
+  delBtn.title = 'Supprimer';
+  delBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openConfirm(link);
+  });
+
+  const topRow = document.createElement('div');
+  topRow.className = 'card-actions-row';
+  topRow.appendChild(starBtn);
+  topRow.appendChild(copyBtn);
+  topRow.appendChild(delBtn);
+
+  actions.appendChild(topRow);
+  actions.appendChild(editBtn);
+  card.appendChild(actions);
+
+  return card;
+}
+
 const content = document.getElementById('content');
 const searchInput = document.getElementById('search');
 const modalOverlay = document.getElementById('modal-overlay');
@@ -781,6 +919,27 @@ function render() {
   if (filtered.length === 0) {
     content.innerHTML = '<div class="empty-state">Aucun résultat.</div>';
     return;
+  }
+
+  const favorites = filtered.filter(l => l.favorite);
+  if (favorites.length > 0) {
+    const pinnedSection = document.createElement('div');
+    pinnedSection.className = 'category';
+
+    const pinnedTitleRow = document.createElement('div');
+    pinnedTitleRow.className = 'category-title-row';
+    const pinnedTitle = document.createElement('div');
+    pinnedTitle.className = 'category-title';
+    pinnedTitle.textContent = '★ Épinglés';
+    pinnedTitleRow.appendChild(pinnedTitle);
+    pinnedSection.appendChild(pinnedTitleRow);
+
+    const pinnedGrid = document.createElement('div');
+    pinnedGrid.className = 'grid';
+    favorites.forEach(link => pinnedGrid.appendChild(createCard(link, { draggable: false })));
+    pinnedSection.appendChild(pinnedGrid);
+
+    content.appendChild(pinnedSection);
   }
 
   const byCategory = {};
@@ -870,81 +1029,7 @@ function render() {
     });
 
     byCategory[cat].forEach(link => {
-      const card = document.createElement('a');
-      card.className = 'card';
-      card.href = link.url;
-      card.target = '_blank';
-      card.rel = 'noopener noreferrer';
-      card.draggable = true;
-
-      card.addEventListener('dragstart', () => {
-        draggedId = link.id;
-        card.classList.add('dragging');
-      });
-      card.addEventListener('dragend', () => card.classList.remove('dragging'));
-      card.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      });
-      card.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        grid.classList.remove('drag-over');
-        moveLink(draggedId, cat, link.id);
-      });
-
-      const img = document.createElement('img');
-      img.src = faviconUrl(link.url);
-      img.alt = '';
-      card.appendChild(img);
-
-      const name = document.createElement('div');
-      name.className = 'card-name';
-      name.textContent = link.name;
-      card.appendChild(name);
-
-      const actions = document.createElement('div');
-      actions.className = 'card-actions';
-
-      const editBtn = document.createElement('button');
-      editBtn.textContent = '✎';
-      editBtn.title = 'Modifier';
-      editBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openModal(link);
-      });
-
-      const copyBtn = document.createElement('button');
-      copyBtn.textContent = '⧉';
-      copyBtn.title = 'Copier l\'URL';
-      copyBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        copyToClipboard(link.url);
-        copyBtn.textContent = '✓';
-        setTimeout(() => { copyBtn.textContent = '⧉'; }, 1200);
-      });
-
-      const delBtn = document.createElement('button');
-      delBtn.textContent = '×';
-      delBtn.title = 'Supprimer';
-      delBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        openConfirm(link);
-      });
-
-      const topRow = document.createElement('div');
-      topRow.className = 'card-actions-row';
-      topRow.appendChild(copyBtn);
-      topRow.appendChild(delBtn);
-
-      actions.appendChild(topRow);
-      actions.appendChild(editBtn);
-      card.appendChild(actions);
-
-      grid.appendChild(card);
+      grid.appendChild(createCard(link, { draggable: true, category: cat, grid }));
     });
 
     section.appendChild(grid);
@@ -1291,14 +1376,23 @@ onAuthStateChanged(auth, (user) => {
 
 // --- Thème clair/sombre ---
 
+const dropdownThemeLabel = document.getElementById('dropdown-theme-label');
+
+function updateThemeLabel() {
+  const current = document.documentElement.getAttribute('data-theme');
+  dropdownThemeLabel.textContent = current === 'dark' ? 'Thème clair' : 'Thème sombre';
+}
+
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme');
   const next = current === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('theme', next);
+  updateThemeLabel();
 }
 document.getElementById('theme-toggle-auth-btn').addEventListener('click', toggleTheme);
-document.getElementById('theme-toggle-dashboard-btn').addEventListener('click', toggleTheme);
+document.getElementById('dropdown-theme-toggle-btn').addEventListener('click', toggleTheme);
+updateThemeLabel();
 
 // --- Menu de compte ---
 
@@ -1323,6 +1417,38 @@ document.getElementById('reset-password-btn').addEventListener('click', async ()
     alert('Un email de réinitialisation a été envoyé à ' + currentUser.email);
   } catch (err) {
     alert(friendlyAuthError(err.code));
+  }
+});
+
+// --- Suppression de compte ---
+
+const deleteAccountOverlay = document.getElementById('delete-account-overlay');
+const deleteAccountError = document.getElementById('delete-account-error');
+
+document.getElementById('delete-account-btn').addEventListener('click', () => {
+  accountDropdown.classList.remove('open');
+  deleteAccountError.textContent = '';
+  deleteAccountOverlay.classList.add('open');
+});
+document.getElementById('delete-account-cancel-btn').addEventListener('click', () => {
+  deleteAccountOverlay.classList.remove('open');
+});
+deleteAccountOverlay.addEventListener('click', (e) => {
+  if (e.target === deleteAccountOverlay) deleteAccountOverlay.classList.remove('open');
+});
+document.getElementById('delete-account-confirm-btn').addEventListener('click', async () => {
+  if (!currentUser) return;
+  deleteAccountError.textContent = '';
+  try {
+    await deleteDoc(doc(db, 'links', currentUser.uid));
+    await deleteUser(currentUser);
+    deleteAccountOverlay.classList.remove('open');
+  } catch (err) {
+    if (err.code === 'auth/requires-recent-login') {
+      deleteAccountError.textContent = 'Par sécurité, déconnectez-vous puis reconnectez-vous avant de réessayer.';
+    } else {
+      deleteAccountError.textContent = friendlyAuthError(err.code);
+    }
   }
 });
 </script>
