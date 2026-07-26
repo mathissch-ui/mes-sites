@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mes Sites</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <script>
 (function() {
   var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -90,6 +91,9 @@
     letter-spacing: -0.02em;
     margin: 0;
     color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 9px;
   }
   .header-actions {
     display: flex;
@@ -412,7 +416,7 @@
     box-shadow: var(--shadow);
   }
   .auth-box h1 {
-    text-align: center;
+    justify-content: center;
     margin-bottom: 24px;
   }
   .auth-error {
@@ -479,7 +483,13 @@
     </button>
     <div class="auth-box">
       <a href="index.html" style="display:block;text-align:center;font-size:13px;color:var(--text-dim);text-decoration:none;margin-bottom:14px;">← Retour à l'accueil</a>
-      <h1>Mes Sites</h1>
+      <h1><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="2" width="9" height="9" rx="2.5" fill="currentColor"/>
+          <rect x="13" y="2" width="9" height="9" rx="2.5" fill="var(--accent)"/>
+          <rect x="2" y="13" width="9" height="9" rx="2.5" fill="currentColor"/>
+          <rect x="13" y="13" width="9" height="9" rx="2.5" fill="currentColor"/>
+        </svg>
+        Mes Sites</h1>
       <form id="auth-form">
         <div class="field">
           <label for="auth-email">Email</label>
@@ -518,7 +528,13 @@
   <div id="dashboard-screen">
     <div class="wrap">
       <header>
-        <a href="index.html" style="text-decoration:none;color:inherit;"><h1>Mes Sites</h1></a>
+        <a href="index.html" style="text-decoration:none;color:inherit;"><h1><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="2" width="9" height="9" rx="2.5" fill="currentColor"/>
+          <rect x="13" y="2" width="9" height="9" rx="2.5" fill="var(--accent)"/>
+          <rect x="2" y="13" width="9" height="9" rx="2.5" fill="currentColor"/>
+          <rect x="13" y="13" width="9" height="9" rx="2.5" fill="currentColor"/>
+        </svg>
+        Mes Sites</h1></a>
         <div class="header-actions">
           <input type="text" id="search" placeholder="Rechercher...">
           <button class="btn-primary" id="add-btn">+ Ajouter un lien</button>
