@@ -4,25 +4,72 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mes Sites</title>
+<script>
+(function() {
+  var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #14161a;
-    --bg-card: #1e2126;
-    --bg-card-hover: #262a31;
-    --border: #2c3038;
-    --text: #e8e9ec;
-    --text-dim: #8b8f98;
+    --bg: #fafafa;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f6f6f7;
+    --border: #e6e6e8;
+    --text: #18181b;
+    --text-dim: #71717a;
+    --accent: #3462e0;
+    --accent-hover: #2650c2;
+    --danger: #e5484d;
+    --shadow: 0 6px 20px rgba(20, 20, 30, 0.06);
+  }
+  :root[data-theme="dark"] {
+    --bg: #111214;
+    --bg-card: #18191c;
+    --bg-card-hover: #202124;
+    --border: #2a2b2f;
+    --text: #f0f0f1;
+    --text-dim: #8b8b93;
     --accent: #5b8cff;
     --accent-hover: #7aa0ff;
     --danger: #ff5b5b;
+    --shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    transition: background 0.2s, color 0.2s;
+  }
+  .theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--text-dim); }
+  .theme-toggle svg { width: 17px; height: 17px; }
+  .theme-icon-sun, .theme-icon-moon { display: none; }
+  :root:not([data-theme="dark"]) .theme-icon-moon { display: block; }
+  :root[data-theme="dark"] .theme-icon-sun { display: block; }
+  .theme-toggle-fixed {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 200;
+    box-shadow: var(--shadow);
   }
   .wrap {
     max-width: 1100px;
@@ -38,8 +85,9 @@
     flex-wrap: wrap;
   }
   h1 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 600;
+    letter-spacing: -0.02em;
     margin: 0;
     color: var(--text);
   }
@@ -219,7 +267,7 @@
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 16px 12px;
+    padding: 18px 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -227,10 +275,11 @@
     text-decoration: none;
     color: var(--text);
     cursor: grab;
-    transition: background 0.15s, transform 0.1s;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
   }
   .card:hover {
-    background: var(--bg-card-hover);
+    border-color: var(--text-dim);
+    box-shadow: var(--shadow);
     transform: translateY(-2px);
   }
   .card.dragging {
@@ -239,7 +288,10 @@
   .card img {
     width: 32px;
     height: 32px;
-    border-radius: 6px;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 3px;
+    border: 1px solid var(--border);
   }
   .card-name {
     font-size: 13px;
@@ -299,6 +351,7 @@
     padding: 24px;
     width: 100%;
     max-width: 360px;
+    box-shadow: var(--shadow);
   }
   .modal h2 {
     margin: 0 0 18px;
@@ -349,6 +402,7 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 28px;
+    box-shadow: var(--shadow);
   }
   .auth-box h1 {
     text-align: center;
@@ -412,6 +466,10 @@
 <body>
 
   <div class="auth-screen" id="auth-screen">
+    <button type="button" class="theme-toggle theme-toggle-fixed" id="theme-toggle-auth-btn" title="Changer de thème" aria-label="Changer de thème">
+      <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
     <div class="auth-box">
       <h1>Mes Sites</h1>
       <form id="auth-form">
@@ -456,6 +514,10 @@
         <div class="header-actions">
           <input type="text" id="search" placeholder="Rechercher...">
           <button class="btn-primary" id="add-btn">+ Ajouter un lien</button>
+          <button type="button" class="theme-toggle" id="theme-toggle-dashboard-btn" title="Changer de thème" aria-label="Changer de thème">
+            <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
           <div class="account-menu">
             <button class="account-btn" id="account-btn" title="Compte"><span id="account-avatar"></span></button>
             <div class="account-dropdown" id="account-dropdown">
@@ -1121,6 +1183,17 @@ onAuthStateChanged(auth, (user) => {
     authScreen.style.display = 'flex';
   }
 });
+
+// --- Thème clair/sombre ---
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+}
+document.getElementById('theme-toggle-auth-btn').addEventListener('click', toggleTheme);
+document.getElementById('theme-toggle-dashboard-btn').addEventListener('click', toggleTheme);
 
 // --- Menu de compte ---
 
