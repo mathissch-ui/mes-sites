@@ -458,12 +458,9 @@
     .sidebar { display: none; }
   }
 
-  .notes-panel {
+  .floating-panel {
     display: none;
     position: fixed;
-    top: 90px;
-    right: 24px;
-    width: min(340px, calc(100vw - 32px));
     min-width: 260px;
     min-height: 180px;
     max-width: calc(100vw - 32px);
@@ -476,8 +473,8 @@
     box-shadow: 0 16px 44px rgba(0, 0, 0, 0.4);
     overflow: hidden;
   }
-  .notes-panel.open { display: flex; resize: both; }
-  .notes-panel-header {
+  .floating-panel.open { display: flex; resize: both; }
+  .floating-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -488,23 +485,23 @@
     cursor: move;
     user-select: none;
   }
-  .notes-panel-header h2 {
+  .floating-panel-header h2 {
     font-size: 13px;
     font-weight: 600;
     margin: 0;
     letter-spacing: -0.01em;
   }
-  .notes-panel-header-right {
+  .floating-panel-header-right {
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .notes-save-status {
+  .floating-save-status {
     font-size: 11px;
     color: var(--text-dim);
     white-space: nowrap;
   }
-  .notes-close-btn {
+  .floating-close-btn {
     width: 24px;
     height: 24px;
     padding: 0;
@@ -517,7 +514,9 @@
     align-items: center;
     justify-content: center;
   }
-  .notes-close-btn:hover { background: var(--border); color: var(--text); }
+  .floating-close-btn:hover { background: var(--border); color: var(--text); }
+
+  .notes-panel { top: 90px; right: 24px; width: min(340px, calc(100vw - 32px)); }
   .notes-textarea {
     width: 100%;
     flex: 1;
@@ -532,6 +531,69 @@
     color: var(--text);
     outline: none;
   }
+
+  .sessions-panel { top: 90px; right: 380px; width: min(300px, calc(100vw - 32px)); }
+  .sessions-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: auto;
+    flex: 1;
+  }
+  .timer-display {
+    font-size: 30px;
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  .timer-task-name {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: -6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .timer-controls { display: flex; gap: 8px; }
+  .timer-controls button { flex: 1; font-size: 12px; padding: 8px; }
+  .sessions-divider { height: 1px; background: var(--border); }
+  .sessions-add-row { display: flex; gap: 6px; }
+  .sessions-add-row input { flex: 1; }
+  .sessions-list { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .session-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    border-radius: 6px;
+  }
+  .session-row:hover { background: var(--bg-card-hover); }
+  .session-row.active { background: rgba(91, 140, 255, 0.12); }
+  .session-row.done .session-name { text-decoration: line-through; color: var(--text-dim); }
+  .session-name {
+    flex: 1;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .session-time { font-size: 11px; color: var(--text-dim); white-space: nowrap; }
+  .session-play-btn, .session-del-btn {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .session-play-btn:hover, .session-del-btn:hover { background: var(--border); color: var(--text); }
 
   #dashboard-screen { display: none; }
 
@@ -717,16 +779,40 @@
       <div class="app-body">
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-content">
-          <div class="notes-panel" id="notes-panel">
-            <div class="notes-panel-header" id="notes-panel-header">
+          <div class="floating-panel notes-panel" id="notes-panel">
+            <div class="floating-panel-header" id="notes-panel-header">
               <h2>📝 Bloc-notes</h2>
-              <div class="notes-panel-header-right">
-                <span class="notes-save-status" id="notes-save-status"></span>
-                <button type="button" class="notes-close-btn" id="notes-close-btn" title="Fermer" aria-label="Fermer">×</button>
+              <div class="floating-panel-header-right">
+                <span class="floating-save-status" id="notes-save-status"></span>
+                <button type="button" class="floating-close-btn" id="notes-close-btn" title="Fermer" aria-label="Fermer">×</button>
               </div>
             </div>
             <textarea id="notes-textarea" class="notes-textarea" placeholder="Écrivez vos notes ici..."></textarea>
           </div>
+
+          <div class="floating-panel sessions-panel" id="sessions-panel">
+            <div class="floating-panel-header" id="sessions-panel-header">
+              <h2>⏱️ Sessions de travail</h2>
+              <div class="floating-panel-header-right">
+                <button type="button" class="floating-close-btn" id="sessions-close-btn" title="Fermer" aria-label="Fermer">×</button>
+              </div>
+            </div>
+            <div class="sessions-body">
+              <div class="timer-display" id="timer-display">00:00:00</div>
+              <div class="timer-task-name" id="timer-task-name">Aucune tâche active</div>
+              <div class="timer-controls">
+                <button type="button" class="btn-ghost" id="timer-pause-btn" disabled>⏸ Pause</button>
+                <button type="button" class="btn-primary" id="timer-stop-btn" disabled>■ Terminer</button>
+              </div>
+              <div class="sessions-divider"></div>
+              <div class="sessions-add-row">
+                <input type="text" id="session-new-input" placeholder="Nouvelle tâche...">
+                <button type="button" class="btn-ghost" id="session-add-btn">+</button>
+              </div>
+              <div class="sessions-list" id="sessions-list"></div>
+            </div>
+          </div>
+
           <div id="content"></div>
 
           <div class="footer-actions">
@@ -872,13 +958,18 @@ let categoryOrder = [];
 let notes = '';
 let notesActive = false;
 let notesSaveTimer = null;
+let sessions = [];
+let sessionsActive = false;
+let activeSessionId = null;
+let timerStartTs = null;
+let timerInterval = null;
 let searchTerm = '';
 let draggedId = null;
 let draggedCategory = null;
 
 function saveLinks(linksToSave) {
   if (!currentUser) return;
-  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notes }).catch(err => {
+  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notes, sessions }).catch(err => {
     alert('Erreur de sauvegarde : ' + err.message);
   });
 }
@@ -1047,6 +1138,16 @@ const notesPanelHeader = document.getElementById('notes-panel-header');
 const notesTextarea = document.getElementById('notes-textarea');
 const notesSaveStatus = document.getElementById('notes-save-status');
 const notesCloseBtn = document.getElementById('notes-close-btn');
+const sessionsPanel = document.getElementById('sessions-panel');
+const sessionsPanelHeader = document.getElementById('sessions-panel-header');
+const sessionsCloseBtn = document.getElementById('sessions-close-btn');
+const sessionsList = document.getElementById('sessions-list');
+const sessionNewInput = document.getElementById('session-new-input');
+const sessionAddBtn = document.getElementById('session-add-btn');
+const timerDisplay = document.getElementById('timer-display');
+const timerTaskName = document.getElementById('timer-task-name');
+const timerPauseBtn = document.getElementById('timer-pause-btn');
+const timerStopBtn = document.getElementById('timer-stop-btn');
 const searchInput = document.getElementById('search');
 
 function setNotesActive(active) {
@@ -1057,55 +1158,64 @@ function setNotesActive(active) {
   if (active) notesTextarea.focus();
 }
 
-notesCloseBtn.addEventListener('click', () => setNotesActive(false));
-
-let notesDragOffset = null;
-
-function onNotesDrag(e) {
-  if (!notesDragOffset) return;
-  const x = Math.max(8, Math.min(window.innerWidth - notesPanel.offsetWidth - 8, e.clientX - notesDragOffset.x));
-  const y = Math.max(8, Math.min(window.innerHeight - 40, e.clientY - notesDragOffset.y));
-  notesPanel.style.left = x + 'px';
-  notesPanel.style.top = y + 'px';
-  notesPanel.style.right = 'auto';
+function setSessionsActive(active) {
+  sessionsActive = active;
+  sessionsPanel.classList.toggle('open', active);
+  const sessionsBtn = sidebar.querySelector('.sidebar-item-sessions');
+  if (sessionsBtn) sessionsBtn.classList.toggle('active', active);
 }
 
-function stopNotesDrag() {
-  if (!notesDragOffset) return;
-  notesDragOffset = null;
-  document.removeEventListener('mousemove', onNotesDrag);
-  document.removeEventListener('mouseup', stopNotesDrag);
-  localStorage.setItem('notesPosition', JSON.stringify({ left: notesPanel.style.left, top: notesPanel.style.top }));
+function makeFloatingPanel(panel, header, closeBtn, onClose, storageKey) {
+  closeBtn.addEventListener('click', onClose);
+
+  let dragOffset = null;
+  function onDrag(e) {
+    if (!dragOffset) return;
+    const x = Math.max(8, Math.min(window.innerWidth - panel.offsetWidth - 8, e.clientX - dragOffset.x));
+    const y = Math.max(8, Math.min(window.innerHeight - 40, e.clientY - dragOffset.y));
+    panel.style.left = x + 'px';
+    panel.style.top = y + 'px';
+    panel.style.right = 'auto';
+  }
+  function stopDrag() {
+    if (!dragOffset) return;
+    dragOffset = null;
+    document.removeEventListener('mousemove', onDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    localStorage.setItem(storageKey + 'Position', JSON.stringify({ left: panel.style.left, top: panel.style.top }));
+  }
+  header.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.floating-close-btn')) return;
+    const rect = panel.getBoundingClientRect();
+    dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    document.addEventListener('mousemove', onDrag);
+    document.addEventListener('mouseup', stopDrag);
+  });
+
+  const savedPosition = JSON.parse(localStorage.getItem(storageKey + 'Position') || 'null');
+  if (savedPosition) {
+    panel.style.left = savedPosition.left;
+    panel.style.top = savedPosition.top;
+    panel.style.right = 'auto';
+  }
+
+  const savedSize = JSON.parse(localStorage.getItem(storageKey + 'Size') || 'null');
+  if (savedSize) {
+    panel.style.width = savedSize.width;
+    panel.style.height = savedSize.height;
+  }
+
+  let resizeSaveTimer = null;
+  new ResizeObserver(() => {
+    clearTimeout(resizeSaveTimer);
+    resizeSaveTimer = setTimeout(() => {
+      localStorage.setItem(storageKey + 'Size', JSON.stringify({ width: panel.style.width, height: panel.style.height }));
+    }, 300);
+  }).observe(panel);
 }
 
-notesPanelHeader.addEventListener('mousedown', (e) => {
-  if (e.target.closest('.notes-close-btn')) return;
-  const rect = notesPanel.getBoundingClientRect();
-  notesDragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  document.addEventListener('mousemove', onNotesDrag);
-  document.addEventListener('mouseup', stopNotesDrag);
-});
-
-const savedNotesPosition = JSON.parse(localStorage.getItem('notesPosition') || 'null');
-if (savedNotesPosition) {
-  notesPanel.style.left = savedNotesPosition.left;
-  notesPanel.style.top = savedNotesPosition.top;
-  notesPanel.style.right = 'auto';
-}
-
-const savedNotesSize = JSON.parse(localStorage.getItem('notesSize') || 'null');
-if (savedNotesSize) {
-  notesPanel.style.width = savedNotesSize.width;
-  notesPanel.style.height = savedNotesSize.height;
-}
-
-let notesResizeSaveTimer = null;
-new ResizeObserver(() => {
-  clearTimeout(notesResizeSaveTimer);
-  notesResizeSaveTimer = setTimeout(() => {
-    localStorage.setItem('notesSize', JSON.stringify({ width: notesPanel.style.width, height: notesPanel.style.height }));
-  }, 300);
-}).observe(notesPanel);
+makeFloatingPanel(notesPanel, notesPanelHeader, notesCloseBtn, () => setNotesActive(false), 'notes');
+makeFloatingPanel(sessionsPanel, sessionsPanelHeader, sessionsCloseBtn, () => setSessionsActive(false), 'sessions');
 
 notesTextarea.addEventListener('input', () => {
   notes = notesTextarea.value;
@@ -1119,6 +1229,151 @@ notesTextarea.addEventListener('input', () => {
     }, 1500);
   }, 600);
 });
+
+function formatDuration(sec) {
+  sec = Math.round(sec);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  if (h > 0) return `${h}h ${m}min`;
+  if (m > 0) return `${m} min`;
+  return `${sec}s`;
+}
+
+function formatTimer(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+  const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+  const s = String(sec % 60).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
+
+function renderSessions() {
+  sessionsList.innerHTML = '';
+  sessions.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'session-row' + (s.done ? ' done' : '') + (s.id === activeSessionId ? ' active' : '');
+
+    const check = document.createElement('input');
+    check.type = 'checkbox';
+    check.checked = s.done;
+    check.addEventListener('change', () => toggleSessionDone(s.id));
+    row.appendChild(check);
+
+    const name = document.createElement('span');
+    name.className = 'session-name';
+    name.textContent = s.name;
+    row.appendChild(name);
+
+    const time = document.createElement('span');
+    time.className = 'session-time';
+    time.textContent = formatDuration(s.totalSeconds);
+    row.appendChild(time);
+
+    const playBtn = document.createElement('button');
+    playBtn.type = 'button';
+    playBtn.className = 'session-play-btn';
+    const isActive = s.id === activeSessionId;
+    playBtn.title = isActive ? 'Mettre en pause' : 'Démarrer le minuteur';
+    playBtn.textContent = isActive ? '⏸' : '▶';
+    playBtn.addEventListener('click', () => { isActive ? pauseTimer() : startTimer(s.id); });
+    row.appendChild(playBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'session-del-btn';
+    delBtn.textContent = '×';
+    delBtn.title = 'Supprimer';
+    delBtn.addEventListener('click', () => deleteSession(s.id));
+    row.appendChild(delBtn);
+
+    sessionsList.appendChild(row);
+  });
+}
+
+function addSession(name) {
+  name = name.trim();
+  if (!name) return;
+  sessions.push({ id: uid(), name, done: false, totalSeconds: 0 });
+  saveLinks(links);
+  renderSessions();
+}
+
+function toggleSessionDone(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  s.done = !s.done;
+  saveLinks(links);
+  renderSessions();
+}
+
+function deleteSession(id) {
+  if (id === activeSessionId) pauseTimer();
+  sessions = sessions.filter(s => s.id !== id);
+  saveLinks(links);
+  renderSessions();
+}
+
+function updateTimerDisplay() {
+  if (!activeSessionId || !timerStartTs) { timerDisplay.textContent = '00:00:00'; return; }
+  const s = sessions.find(x => x.id === activeSessionId);
+  const elapsed = (s ? s.totalSeconds : 0) + (Date.now() - timerStartTs) / 1000;
+  timerDisplay.textContent = formatTimer(elapsed);
+}
+
+function startTimer(id) {
+  if (activeSessionId && activeSessionId !== id) pauseTimer();
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  activeSessionId = id;
+  timerStartTs = Date.now();
+  timerTaskName.textContent = s.name;
+  timerPauseBtn.disabled = false;
+  timerStopBtn.disabled = false;
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimerDisplay, 1000);
+  updateTimerDisplay();
+  renderSessions();
+}
+
+function pauseTimer() {
+  if (!activeSessionId || !timerStartTs) return;
+  const s = sessions.find(x => x.id === activeSessionId);
+  if (s) s.totalSeconds += (Date.now() - timerStartTs) / 1000;
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerStartTs = null;
+  activeSessionId = null;
+  timerTaskName.textContent = 'Aucune tâche active';
+  timerDisplay.textContent = '00:00:00';
+  timerPauseBtn.disabled = true;
+  timerStopBtn.disabled = true;
+  saveLinks(links);
+  renderSessions();
+}
+
+function stopAndFinishTimer() {
+  if (!activeSessionId) return;
+  const id = activeSessionId;
+  pauseTimer();
+  const s = sessions.find(x => x.id === id);
+  if (s) { s.done = true; saveLinks(links); renderSessions(); }
+}
+
+sessionAddBtn.addEventListener('click', () => { addSession(sessionNewInput.value); sessionNewInput.value = ''; });
+sessionNewInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { addSession(sessionNewInput.value); sessionNewInput.value = ''; }
+});
+timerPauseBtn.addEventListener('click', pauseTimer);
+timerStopBtn.addEventListener('click', stopAndFinishTimer);
+
+window.addEventListener('beforeunload', () => {
+  if (activeSessionId && timerStartTs) {
+    const s = sessions.find(x => x.id === activeSessionId);
+    if (s) s.totalSeconds += (Date.now() - timerStartTs) / 1000;
+    saveLinks(links);
+  }
+});
+
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const form = document.getElementById('link-form');
@@ -1171,6 +1426,15 @@ function render() {
   notesBtn.appendChild(notesLabel);
   notesBtn.addEventListener('click', () => setNotesActive(!notesActive));
   sidebar.appendChild(notesBtn);
+
+  const sessionsBtn = document.createElement('button');
+  sessionsBtn.type = 'button';
+  sessionsBtn.className = 'sidebar-item sidebar-item-sessions' + (sessionsActive ? ' active' : '');
+  const sessionsLabel = document.createElement('span');
+  sessionsLabel.textContent = '⏱️ Sessions de travail';
+  sessionsBtn.appendChild(sessionsLabel);
+  sessionsBtn.addEventListener('click', () => setSessionsActive(!sessionsActive));
+  sidebar.appendChild(sessionsBtn);
 
   const term = searchTerm.trim().toLowerCase();
   const filtered = links.filter(l => l.name.toLowerCase().includes(term) || l.url.toLowerCase().includes(term));
@@ -1624,6 +1888,8 @@ onAuthStateChanged(auth, (user) => {
       categoryOrder = snap.exists() ? (snap.data().categoryOrder || []) : [];
       notes = snap.exists() ? (snap.data().notes || '') : '';
       if (document.activeElement !== notesTextarea) notesTextarea.value = notes;
+      sessions = snap.exists() ? (snap.data().sessions || []) : [];
+      renderSessions();
       render();
     }, (err) => {
       alert('Erreur de synchronisation : ' + err.message);
@@ -1635,6 +1901,16 @@ onAuthStateChanged(auth, (user) => {
     notesActive = false;
     notesPanel.classList.remove('open');
     notesTextarea.value = '';
+    sessions = [];
+    sessionsActive = false;
+    activeSessionId = null;
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    timerStartTs = null;
+    sessionsPanel.classList.remove('open');
+    timerDisplay.textContent = '00:00:00';
+    timerTaskName.textContent = 'Aucune tâche active';
+    timerPauseBtn.disabled = true;
+    timerStopBtn.disabled = true;
     authMode = 'login';
     updateAuthUI();
     authForm.reset();
