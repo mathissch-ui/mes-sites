@@ -879,12 +879,16 @@ function createCard(link, opts) {
 
   const topRow = document.createElement('div');
   topRow.className = 'card-actions-row';
-  topRow.appendChild(starBtn);
   topRow.appendChild(copyBtn);
   topRow.appendChild(delBtn);
 
+  const bottomRow = document.createElement('div');
+  bottomRow.className = 'card-actions-row';
+  bottomRow.appendChild(starBtn);
+  bottomRow.appendChild(editBtn);
+
   actions.appendChild(topRow);
-  actions.appendChild(editBtn);
+  actions.appendChild(bottomRow);
   card.appendChild(actions);
 
   return card;
