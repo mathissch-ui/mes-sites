@@ -415,6 +415,54 @@
   }
   .footer-actions button { font-size: 12px; padding: 6px 12px; }
 
+  .app-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+  }
+  .sidebar {
+    width: 190px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sidebar-item:hover { background: var(--bg-card-hover); color: var(--text); }
+  .sidebar-item.active { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+  .sidebar-item .sidebar-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--bg-card-hover);
+    border-radius: 100px;
+    padding: 1px 7px;
+    flex-shrink: 0;
+  }
+  .sidebar-item.active .sidebar-count { background: var(--bg); }
+  .main-content { flex: 1; min-width: 0; }
+  @media (max-width: 860px) {
+    .sidebar { display: none; }
+  }
+
   #dashboard-screen { display: none; }
 
   .auth-screen {
@@ -586,12 +634,17 @@
         </div>
       </header>
 
-      <div id="content"></div>
+      <div class="app-body">
+        <aside class="sidebar" id="sidebar"></aside>
+        <div class="main-content">
+          <div id="content"></div>
 
-      <div class="footer-actions">
-        <button class="btn-ghost" id="export-btn">Exporter</button>
-        <button class="btn-ghost" id="import-btn">Importer</button>
-        <input type="file" id="import-file" accept="application/json" style="display:none">
+          <div class="footer-actions">
+            <button class="btn-ghost" id="export-btn">Exporter</button>
+            <button class="btn-ghost" id="import-btn">Importer</button>
+            <input type="file" id="import-file" accept="application/json" style="display:none">
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -895,7 +948,9 @@ function createCard(link, opts) {
 }
 
 const content = document.getElementById('content');
+const sidebar = document.getElementById('sidebar');
 const searchInput = document.getElementById('search');
+let sidebarObserver = null;
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const form = document.getElementById('link-form');
@@ -913,6 +968,10 @@ function getCategories() {
 
 function render() {
   content.innerHTML = '';
+  sidebar.innerHTML = '';
+  if (sidebarObserver) { sidebarObserver.disconnect(); sidebarObserver = null; }
+  const sidebarEntries = [];
+
   const term = searchTerm.trim().toLowerCase();
   const filtered = links.filter(l => l.name.toLowerCase().includes(term) || l.url.toLowerCase().includes(term));
 
@@ -944,6 +1003,7 @@ function render() {
     pinnedSection.appendChild(pinnedGrid);
 
     content.appendChild(pinnedSection);
+    sidebarEntries.push({ label: '★ Épinglés', count: favorites.length, section: pinnedSection });
   }
 
   const byCategory = {};
@@ -1038,7 +1098,45 @@ function render() {
 
     section.appendChild(grid);
     content.appendChild(section);
+    sidebarEntries.push({ label: cat, count: byCategory[cat].length, section });
   });
+
+  buildSidebar(sidebarEntries);
+}
+
+function buildSidebar(entries) {
+  if (entries.length === 0) return;
+
+  const buttons = entries.map(entry => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sidebar-item';
+    const label = document.createElement('span');
+    label.textContent = entry.label;
+    btn.appendChild(label);
+    const count = document.createElement('span');
+    count.className = 'sidebar-count';
+    count.textContent = entry.count;
+    btn.appendChild(count);
+    btn.addEventListener('click', () => {
+      entry.section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    sidebar.appendChild(btn);
+    return btn;
+  });
+  buttons[0].classList.add('active');
+
+  sidebarObserver = new IntersectionObserver((observedEntries) => {
+    observedEntries.forEach(obs => {
+      if (!obs.isIntersecting) return;
+      const idx = entries.findIndex(e => e.section === obs.target);
+      if (idx === -1) return;
+      buttons.forEach(b => b.classList.remove('active'));
+      buttons[idx].classList.add('active');
+    });
+  }, { rootMargin: '-10% 0px -70% 0px' });
+
+  entries.forEach(entry => sidebarObserver.observe(entry.section));
 }
 
 function populateCategorySelect() {
