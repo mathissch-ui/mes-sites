@@ -453,21 +453,6 @@
   }
   .sidebar-item:hover { background: var(--bg-card-hover); color: var(--text); }
   .sidebar-item.active { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
-  .sidebar-item .sidebar-count {
-    margin-left: auto;
-    font-size: 11px;
-    color: var(--text-dim);
-    background: var(--bg-card-hover);
-    border-radius: 100px;
-    padding: 1px 7px;
-    flex-shrink: 0;
-  }
-  .sidebar-item.active .sidebar-count { background: var(--bg); }
-  .sidebar-divider {
-    height: 1px;
-    background: var(--border);
-    margin: 8px 4px;
-  }
   .main-content { flex: 1; min-width: 0; }
   @media (max-width: 860px) {
     .sidebar { display: none; }
@@ -1063,7 +1048,6 @@ const notesTextarea = document.getElementById('notes-textarea');
 const notesSaveStatus = document.getElementById('notes-save-status');
 const notesCloseBtn = document.getElementById('notes-close-btn');
 const searchInput = document.getElementById('search');
-let sidebarObserver = null;
 
 function setNotesActive(active) {
   notesActive = active;
@@ -1178,7 +1162,6 @@ document.addEventListener('click', (e) => {
 function render() {
   content.innerHTML = '';
   sidebar.innerHTML = '';
-  if (sidebarObserver) { sidebarObserver.disconnect(); sidebarObserver = null; }
 
   const notesBtn = document.createElement('button');
   notesBtn.type = 'button';
@@ -1188,12 +1171,6 @@ function render() {
   notesBtn.appendChild(notesLabel);
   notesBtn.addEventListener('click', () => setNotesActive(!notesActive));
   sidebar.appendChild(notesBtn);
-
-  const sidebarDivider = document.createElement('div');
-  sidebarDivider.className = 'sidebar-divider';
-  sidebar.appendChild(sidebarDivider);
-
-  const sidebarEntries = [];
 
   const term = searchTerm.trim().toLowerCase();
   const filtered = links.filter(l => l.name.toLowerCase().includes(term) || l.url.toLowerCase().includes(term));
@@ -1226,7 +1203,6 @@ function render() {
     pinnedSection.appendChild(pinnedGrid);
 
     content.appendChild(pinnedSection);
-    sidebarEntries.push({ label: '★ Épinglés', count: favorites.length, section: pinnedSection });
   }
 
   const byCategory = {};
@@ -1321,45 +1297,7 @@ function render() {
 
     section.appendChild(grid);
     content.appendChild(section);
-    sidebarEntries.push({ label: cat, count: byCategory[cat].length, section });
   });
-
-  buildSidebar(sidebarEntries);
-}
-
-function buildSidebar(entries) {
-  if (entries.length === 0) return;
-
-  const buttons = entries.map(entry => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'sidebar-item';
-    const label = document.createElement('span');
-    label.textContent = entry.label;
-    btn.appendChild(label);
-    const count = document.createElement('span');
-    count.className = 'sidebar-count';
-    count.textContent = entry.count;
-    btn.appendChild(count);
-    btn.addEventListener('click', () => {
-      entry.section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-    sidebar.appendChild(btn);
-    return btn;
-  });
-  buttons[0].classList.add('active');
-
-  sidebarObserver = new IntersectionObserver((observedEntries) => {
-    observedEntries.forEach(obs => {
-      if (!obs.isIntersecting) return;
-      const idx = entries.findIndex(e => e.section === obs.target);
-      if (idx === -1) return;
-      buttons.forEach(b => b.classList.remove('active'));
-      buttons[idx].classList.add('active');
-    });
-  }, { rootMargin: '-10% 0px -70% 0px' });
-
-  entries.forEach(entry => sidebarObserver.observe(entry.section));
 }
 
 function populateCategorySelect() {
