@@ -758,7 +758,7 @@
               </div>
               <div class="account-dropdown-divider"></div>
               <div class="account-plan-row">
-                <span>Plan <b>Gratuit</b></span>
+                <span>Plan <b id="account-plan-label">Gratuit</b></span>
                 <a href="index.html#pricing" class="account-plan-link">Voir les tarifs</a>
               </div>
               <div class="account-dropdown-divider"></div>
@@ -918,8 +918,22 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
+// Emails auto-provisionnés en accès admin (illimité) a leur toute première connexion.
+// Une fois le champ "plan" présent sur leur document Firestore, cette liste n'est plus
+// consultée pour eux : pour révoquer/transférer l'admin, modifier directement le champ
+// "plan" du document (collection "links", id = uid du compte) dans la console Firebase.
+const ADMIN_EMAILS = ['mathis.schwob@gmail.com'];
+
+const PLAN_LABELS = { free: 'Gratuit', pro: 'Pro', unlimited: 'Illimité', admin: 'Admin' };
+
 let currentUser = null;
 let unsubscribeSnapshot = null;
+let currentPlan = 'free';
+
+function updatePlanUI() {
+  const el = document.getElementById('account-plan-label');
+  if (el) el.textContent = PLAN_LABELS[currentPlan] || 'Gratuit';
+}
 
 function faviconUrl(url) {
   try {
@@ -969,7 +983,7 @@ let draggedCategory = null;
 
 function saveLinks(linksToSave) {
   if (!currentUser) return;
-  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notes, sessions }).catch(err => {
+  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notes, sessions, plan: currentPlan }).catch(err => {
     alert('Erreur de sauvegarde : ' + err.message);
   });
 }
@@ -1884,11 +1898,18 @@ onAuthStateChanged(auth, (user) => {
     accountProvider.textContent = providerId === 'google.com' ? 'Connecté via Google' : 'Connecté via email';
 
     unsubscribeSnapshot = onSnapshot(doc(db, 'links', user.uid), (snap) => {
-      links = snap.exists() ? (snap.data().items || []) : [];
-      categoryOrder = snap.exists() ? (snap.data().categoryOrder || []) : [];
-      notes = snap.exists() ? (snap.data().notes || '') : '';
+      const data = snap.exists() ? snap.data() : {};
+      links = data.items || [];
+      categoryOrder = data.categoryOrder || [];
+      notes = data.notes || '';
       if (document.activeElement !== notesTextarea) notesTextarea.value = notes;
-      sessions = snap.exists() ? (snap.data().sessions || []) : [];
+      sessions = data.sessions || [];
+
+      const hadPlan = !!data.plan;
+      currentPlan = data.plan || (ADMIN_EMAILS.includes(user.email) ? 'admin' : 'free');
+      updatePlanUI();
+      if (!hadPlan) saveLinks(links);
+
       renderSessions();
       render();
     }, (err) => {
@@ -1898,6 +1919,8 @@ onAuthStateChanged(auth, (user) => {
     links = [];
     categoryOrder = [];
     notes = '';
+    currentPlan = 'free';
+    updatePlanUI();
     notesActive = false;
     notesPanel.classList.remove('open');
     notesTextarea.value = '';
