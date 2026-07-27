@@ -404,11 +404,53 @@
   }
 
   /* Pricing */
+  .billing-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: fit-content;
+    margin: 0 auto 40px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 4px;
+  }
+  .billing-toggle button {
+    background: transparent;
+    color: var(--text-dim);
+    padding: 8px 18px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .billing-toggle button.active {
+    background: var(--text);
+    color: var(--bg);
+  }
+  .billing-save {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 100px;
+    background: var(--tag);
+    color: #1a1005;
+  }
+  .billing-toggle button.active .billing-save { background: rgba(0,0,0,0.15); color: inherit; }
+  .price-annual { display: none; }
+  .pricing-grid.annual .price-monthly { display: none; }
+  .pricing-grid.annual .price-annual { display: inline; }
+  .price-period {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dim);
+  }
   .pricing-grid {
-    max-width: 720px;
+    max-width: 900px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 20px;
   }
   .price-card {
@@ -913,17 +955,21 @@
   <section id="pricing" class="hairline">
     <div class="section-head">
       <span class="eyebrow">Tarifs</span>
-      <h2 class="serif">Gratuit pour commencer</h2>
-      <p>Passez au forfait Pro quand vous en avez besoin, résiliable à tout moment.</p>
+      <h2 class="serif">Trois offres, sans surprise</h2>
+      <p>Passez à un forfait payant quand vous en avez besoin, résiliable à tout moment.</p>
     </div>
-    <div class="pricing-grid">
+    <div class="billing-toggle" id="billing-toggle">
+      <button type="button" class="active" data-billing="monthly">Mensuel</button>
+      <button type="button" data-billing="annual">Annuel <span class="billing-save">2 mois offerts</span></button>
+    </div>
+    <div class="pricing-grid" id="pricing-grid">
       <div class="price-card">
         <h3>Gratuit</h3>
         <div class="price-amount">0€</div>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Jusqu'à 15 liens</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Catégories illimitées</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Connexion email ou Google</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Bloc-notes et sessions de travail</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Synchronisation multi-appareils</li>
         </ul>
         <a href="app.html" class="btn btn-ghost">Commencer gratuitement</a>
@@ -931,14 +977,31 @@
       <div class="price-card featured">
         <span class="price-badge">Bientôt disponible</span>
         <h3>Pro</h3>
-        <div class="price-amount">2,99€<span> / mois</span></div>
+        <div class="price-amount">
+          <span class="price-monthly">2,99€<span class="price-period"> / mois</span></span>
+          <span class="price-annual">29,90€<span class="price-period"> / an</span></span>
+        </div>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Liens illimités</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Export / import avancé</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Domaine personnalisé</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Support prioritaire</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Historique des sessions illimité</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Support standard</li>
         </ul>
         <button type="button" class="btn btn-primary" disabled style="opacity:0.5;cursor:default;">Bientôt disponible</button>
+      </div>
+      <div class="price-card">
+        <h3>Illimité</h3>
+        <div class="price-amount">
+          <span class="price-monthly">7,99€<span class="price-period"> / mois</span></span>
+          <span class="price-annual">79,90€<span class="price-period"> / an</span></span>
+        </div>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Tout Pro, en illimité</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Domaine personnalisé</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Sauvegardes automatiques</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Support prioritaire</li>
+        </ul>
+        <button type="button" class="btn btn-ghost" disabled style="opacity:0.5;cursor:default;">Bientôt disponible</button>
       </div>
     </div>
   </section>
@@ -1026,6 +1089,14 @@ document.querySelectorAll('.faq-q').forEach(function(btn) {
     const wasOpen = item.classList.contains('open');
     item.parentElement.querySelectorAll('.faq-item').forEach(function(i) { i.classList.remove('open'); });
     if (!wasOpen) item.classList.add('open');
+  });
+});
+
+document.querySelectorAll('#billing-toggle button').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#billing-toggle button').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('pricing-grid').classList.toggle('annual', btn.dataset.billing === 'annual');
   });
 });
 </script>
