@@ -485,6 +485,15 @@
     color: var(--text-dim);
     font-size: 13px;
   }
+  .footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .footer-links a:hover { color: var(--text); }
 
   .cta-band {
     padding: 64px 24px;
@@ -507,6 +516,166 @@
     margin: 0 0 24px;
   }
 
+  /* Nav links */
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dim);
+  }
+  .nav-links a:hover { color: var(--text); }
+  @media (max-width: 780px) {
+    .nav-links { display: none; }
+  }
+
+  /* Steps */
+  .steps-grid {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 780px) {
+    .steps-grid { grid-template-columns: 1fr; }
+  }
+  .step-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+  }
+  .step-num {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  .step-card .feature-icon { margin-bottom: 16px; }
+  .step-card h3 { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
+  .step-card p { font-size: 14px; color: var(--text-dim); line-height: 1.55; margin: 0; }
+
+  /* Diff cards */
+  .diff-grid {
+    max-width: 760px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 640px) {
+    .diff-grid { grid-template-columns: 1fr; }
+  }
+  .diff-card {
+    border-radius: 16px;
+    padding: 30px 26px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+  }
+  .diff-card.diff-after { border-color: var(--accent); }
+  .diff-card h3 { font-size: 16px; font-weight: 600; margin: 0 0 8px; }
+  .diff-card p { font-size: 14px; color: var(--text-dim); line-height: 1.55; margin: 0; }
+
+  /* Preview grid */
+  .preview-grid {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 780px) {
+    .preview-grid { grid-template-columns: 1fr; }
+  }
+  .preview-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .preview-card-bar {
+    display: flex;
+    gap: 5px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-card-bar span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .preview-card-body { padding: 18px 16px 22px; }
+  .preview-tag {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .preview-dots { display: flex; gap: 8px; flex-wrap: wrap; }
+  .preview-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+  }
+  .preview-label {
+    margin-top: 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* FAQ */
+  .faq-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 780px) {
+    .faq-layout { grid-template-columns: 1fr; gap: 24px; }
+  }
+  .faq-intro .eyebrow { margin-bottom: 16px; }
+  .faq-intro h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+  }
+  .faq-intro p { color: var(--text-dim); font-size: 14px; line-height: 1.6; margin: 0; }
+  .faq-list { display: flex; flex-direction: column; }
+  .faq-item { border-bottom: 1px solid var(--border); }
+  .faq-item:first-child { border-top: 1px solid var(--border); }
+  .faq-q {
+    width: 100%;
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 18px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    text-align: left;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .faq-chevron { width: 16px; height: 16px; color: var(--text-dim); flex-shrink: 0; transition: transform 0.2s; }
+  .faq-item.open .faq-chevron { transform: rotate(180deg); }
+  .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.25s ease; }
+  .faq-a p { margin: 0 0 18px; font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+  .faq-item.open .faq-a { max-height: 220px; }
+
   @media (max-width: 640px) {
     .hero h1 { font-size: 32px; }
     section { padding: 56px 20px; }
@@ -526,6 +695,12 @@
         <rect x="13" y="13" width="9" height="9" rx="2.5" fill="currentColor"/>
       </svg>
       Mes Sites
+    </div>
+    <div class="nav-links">
+      <a href="#how">Fonctionnement</a>
+      <a href="#features">Fonctionnalités</a>
+      <a href="#pricing">Tarifs</a>
+      <a href="#faq">FAQ</a>
     </div>
     <div class="nav-actions">
       <button type="button" class="theme-toggle" id="theme-toggle-btn" title="Changer de thème" aria-label="Changer de thème">
@@ -581,6 +756,34 @@
     </div>
   </div>
 
+  <section id="how" class="hairline">
+    <div class="section-head">
+      <span class="eyebrow">Fonctionnement</span>
+      <h2 class="serif">Simple comme bonjour</h2>
+      <p>Trois gestes suffisent pour transformer votre chaos numérique en bibliothèque personnelle.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">Étape 1</div>
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+        <h3>Créez vos catégories sur mesure</h3>
+        <p>Nommez, colorez et organisez vos catégories comme vous l'entendez.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">Étape 2</div>
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <h3>Ajoutez vos liens en un éclair</h3>
+        <p>Collez une URL, le reste se remplit tout seul, favicon compris.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">Étape 3</div>
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <h3>Retrouvez tout en un clin d'œil</h3>
+        <p>Votre tableau de bord affiche l'essentiel, rien de plus.</p>
+      </div>
+    </div>
+  </section>
+
   <section id="compare" class="hairline">
     <div class="section-head">
       <span class="eyebrow">Avant / après</span>
@@ -609,6 +812,26 @@
     </div>
   </section>
 
+  <section id="diff" class="hairline">
+    <div class="section-head">
+      <span class="eyebrow">Comparaison</span>
+      <h2 class="serif">La différence est nette</h2>
+      <p>Ce qui manquait à votre navigateur. Voici la preuve.</p>
+    </div>
+    <div class="diff-grid">
+      <div class="diff-card diff-before">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+        <h3>Une barre de favoris qui déborde et se cache</h3>
+        <p>Les dossiers s'empilent, le navigateur sature, et vous cherchez le même lien pour la dixième fois.</p>
+      </div>
+      <div class="diff-card diff-after">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <h3>Un espace épuré, synchronisé et toujours visible</h3>
+        <p>Chaque site a sa place. Votre page d'accueil reste claire, sur ordinateur comme sur mobile.</p>
+      </div>
+    </div>
+  </section>
+
   <div class="cta-band hairline">
     <div class="cta-band-inner">
       <h2 class="serif">Prêt à passer à l'action ?</h2>
@@ -620,7 +843,7 @@
   <section id="features" class="hairline">
     <div class="section-head">
       <span class="eyebrow">Fonctionnalités</span>
-      <h2 class="serif">Simple à utiliser, beau à regarder</h2>
+      <h2 class="serif">Des outils taillés pour l'essentiel</h2>
       <p>Pas de fonctionnalités superflues — juste ce qu'il faut pour organiser vos liens sans effort.</p>
     </div>
     <div class="features-grid">
@@ -643,6 +866,46 @@
         <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg></div>
         <h3>Clair ou sombre</h3>
         <p>Un design épuré qui s'adapte à votre préférence, mémorisée automatiquement.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="preview" class="hairline">
+    <div class="section-head">
+      <span class="eyebrow">Aperçu</span>
+      <h2 class="serif">L'élégance sobre du tableau de bord</h2>
+      <p>Un espace clair, quel que soit l'endroit où vous vous connectez.</p>
+    </div>
+    <div class="preview-grid">
+      <div class="preview-card">
+        <div class="preview-card-bar"><span></span><span></span><span></span></div>
+        <div class="preview-card-body">
+          <div class="preview-tag">Catégories</div>
+          <div class="preview-dots">
+            <div class="preview-dot"></div><div class="preview-dot"></div><div class="preview-dot"></div><div class="preview-dot"></div>
+          </div>
+          <div class="preview-label">Rangé par thème</div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card-bar"><span></span><span></span><span></span></div>
+        <div class="preview-card-body">
+          <div class="preview-tag">Recherche</div>
+          <div class="preview-dots">
+            <div class="preview-dot"></div><div class="preview-dot"></div>
+          </div>
+          <div class="preview-label">Trouvé en 2 secondes</div>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-card-bar"><span></span><span></span><span></span></div>
+        <div class="preview-card-body">
+          <div class="preview-tag">Mobile</div>
+          <div class="preview-dots">
+            <div class="preview-dot"></div><div class="preview-dot"></div><div class="preview-dot"></div>
+          </div>
+          <div class="preview-label">Synchronisé partout</div>
+        </div>
       </div>
     </div>
   </section>
@@ -680,15 +943,71 @@
     </div>
   </section>
 
+  <section id="faq" class="hairline">
+    <div class="wrap faq-layout">
+      <div class="faq-intro">
+        <span class="eyebrow">FAQ</span>
+        <h2 class="serif">Vos questions, nos réponses</h2>
+        <p>Les réponses aux questions qui reviennent le plus souvent. Pour aller plus loin, écrivez-nous.</p>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item open">
+          <button type="button" class="faq-q">
+            <span>Mes données sont-elles en sécurité ?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a"><p>Oui. Elles sont stockées et chiffrées via Firebase (Google Cloud). Vous pouvez exporter ou supprimer votre compte à tout moment depuis votre profil.</p></div>
+        </div>
+        <div class="faq-item">
+          <button type="button" class="faq-q">
+            <span>Comment fonctionne la synchronisation ?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a"><p>Dès que vous êtes connecté, vos catégories et liens se synchronisent automatiquement entre tous vos appareils, sans rien configurer.</p></div>
+        </div>
+        <div class="faq-item">
+          <button type="button" class="faq-q">
+            <span>Puis-je changer de forfait plus tard ?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a"><p>Oui. Passez au forfait Pro quand vous en avez besoin depuis votre tableau de bord, résiliable à tout moment.</p></div>
+        </div>
+        <div class="faq-item">
+          <button type="button" class="faq-q">
+            <span>Quels navigateurs sont supportés ?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a"><p>Mes Sites fonctionne sur Chrome, Firefox, Safari et Edge, aussi bien sur ordinateur que sur mobile.</p></div>
+        </div>
+        <div class="faq-item">
+          <button type="button" class="faq-q">
+            <span>L'offre gratuite est-elle limitée dans le temps ?</span>
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-a"><p>Non. Le forfait Gratuit n'a pas de limite de durée. Vous pouvez l'utiliser aussi longtemps que vous le souhaitez.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="cta-band hairline">
     <div class="cta-band-inner">
-      <h2 class="serif">On vous attend.</h2>
-      <p>Rejoignez Mes Sites dès aujourd'hui — c'est gratuit et ça prend une minute.</p>
-      <a href="app.html" class="btn btn-primary">Commencer maintenant</a>
+      <h2 class="serif">Votre nouvel onglet vous attend.</h2>
+      <p>Rangez le chaos, retrouvez le calme — c'est gratuit et ça prend une minute.</p>
+      <div class="hero-actions">
+        <a href="app.html" class="btn btn-primary">Commencer maintenant</a>
+        <a href="#preview" class="btn btn-ghost">Voir un aperçu</a>
+      </div>
     </div>
   </div>
 
   <footer>
+    <div class="footer-links">
+      <a href="#how">Fonctionnement</a>
+      <a href="#features">Fonctionnalités</a>
+      <a href="#pricing">Tarifs</a>
+      <a href="#faq">FAQ</a>
+    </div>
     © 2026 Mes Sites. Tous droits réservés.
   </footer>
 
@@ -700,6 +1019,15 @@ function toggleTheme() {
   localStorage.setItem('theme', next);
 }
 document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+
+document.querySelectorAll('.faq-q').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    const item = btn.closest('.faq-item');
+    const wasOpen = item.classList.contains('open');
+    item.parentElement.querySelectorAll('.faq-item').forEach(function(i) { i.classList.remove('open'); });
+    if (!wasOpen) item.classList.add('open');
+  });
+});
 </script>
 </body>
 </html>
