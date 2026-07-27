@@ -468,38 +468,75 @@
     .sidebar { display: none; }
   }
 
-  .notes-panel { display: none; }
+  .notes-panel {
+    display: none;
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    width: min(340px, calc(100vw - 32px));
+    z-index: 150;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+  }
+  .notes-panel.open { display: flex; }
   .notes-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
+    gap: 10px;
+    padding: 10px 8px 10px 14px;
+    background: var(--bg-card-hover);
+    border-bottom: 1px solid var(--border);
+    cursor: move;
+    user-select: none;
   }
   .notes-panel-header h2 {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
     margin: 0;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+  }
+  .notes-panel-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .notes-save-status {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
+    white-space: nowrap;
   }
+  .notes-close-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .notes-close-btn:hover { background: var(--border); color: var(--text); }
   .notes-textarea {
     width: 100%;
-    min-height: 460px;
+    height: 280px;
     resize: vertical;
     background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
+    border: none;
+    padding: 14px;
     font-family: inherit;
     font-size: 14px;
     line-height: 1.6;
     color: var(--text);
     outline: none;
   }
-  .notes-textarea:focus { border-color: var(--accent); }
 
   #dashboard-screen { display: none; }
 
@@ -676,9 +713,12 @@
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-content">
           <div class="notes-panel" id="notes-panel">
-            <div class="notes-panel-header">
+            <div class="notes-panel-header" id="notes-panel-header">
               <h2>📝 Bloc-notes</h2>
-              <span class="notes-save-status" id="notes-save-status"></span>
+              <div class="notes-panel-header-right">
+                <span class="notes-save-status" id="notes-save-status"></span>
+                <button type="button" class="notes-close-btn" id="notes-close-btn" title="Fermer" aria-label="Fermer">×</button>
+              </div>
             </div>
             <textarea id="notes-textarea" class="notes-textarea" placeholder="Écrivez vos notes ici..."></textarea>
           </div>
@@ -998,21 +1038,55 @@ function createCard(link, opts) {
 const content = document.getElementById('content');
 const sidebar = document.getElementById('sidebar');
 const notesPanel = document.getElementById('notes-panel');
+const notesPanelHeader = document.getElementById('notes-panel-header');
 const notesTextarea = document.getElementById('notes-textarea');
 const notesSaveStatus = document.getElementById('notes-save-status');
+const notesCloseBtn = document.getElementById('notes-close-btn');
 const searchInput = document.getElementById('search');
 let sidebarObserver = null;
 
 function setNotesActive(active) {
   notesActive = active;
-  notesPanel.style.display = active ? 'block' : 'none';
-  content.style.display = active ? 'none' : '';
+  notesPanel.classList.toggle('open', active);
   const notesBtn = sidebar.querySelector('.sidebar-item-notes');
   if (notesBtn) notesBtn.classList.toggle('active', active);
-  if (active) {
-    sidebar.querySelectorAll('.sidebar-item:not(.sidebar-item-notes)').forEach(b => b.classList.remove('active'));
-    notesTextarea.focus();
-  }
+  if (active) notesTextarea.focus();
+}
+
+notesCloseBtn.addEventListener('click', () => setNotesActive(false));
+
+let notesDragOffset = null;
+
+function onNotesDrag(e) {
+  if (!notesDragOffset) return;
+  const x = Math.max(8, Math.min(window.innerWidth - notesPanel.offsetWidth - 8, e.clientX - notesDragOffset.x));
+  const y = Math.max(8, Math.min(window.innerHeight - 40, e.clientY - notesDragOffset.y));
+  notesPanel.style.left = x + 'px';
+  notesPanel.style.top = y + 'px';
+  notesPanel.style.right = 'auto';
+}
+
+function stopNotesDrag() {
+  if (!notesDragOffset) return;
+  notesDragOffset = null;
+  document.removeEventListener('mousemove', onNotesDrag);
+  document.removeEventListener('mouseup', stopNotesDrag);
+  localStorage.setItem('notesPosition', JSON.stringify({ left: notesPanel.style.left, top: notesPanel.style.top }));
+}
+
+notesPanelHeader.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.notes-close-btn')) return;
+  const rect = notesPanel.getBoundingClientRect();
+  notesDragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  document.addEventListener('mousemove', onNotesDrag);
+  document.addEventListener('mouseup', stopNotesDrag);
+});
+
+const savedNotesPosition = JSON.parse(localStorage.getItem('notesPosition') || 'null');
+if (savedNotesPosition) {
+  notesPanel.style.left = savedNotesPosition.left;
+  notesPanel.style.top = savedNotesPosition.top;
+  notesPanel.style.right = 'auto';
 }
 
 notesTextarea.addEventListener('input', () => {
@@ -1046,8 +1120,6 @@ function render() {
   content.innerHTML = '';
   sidebar.innerHTML = '';
   if (sidebarObserver) { sidebarObserver.disconnect(); sidebarObserver = null; }
-  notesPanel.style.display = notesActive ? 'block' : 'none';
-  content.style.display = notesActive ? 'none' : '';
 
   const notesBtn = document.createElement('button');
   notesBtn.type = 'button';
@@ -1055,7 +1127,7 @@ function render() {
   const notesLabel = document.createElement('span');
   notesLabel.textContent = '📝 Bloc-notes';
   notesBtn.appendChild(notesLabel);
-  notesBtn.addEventListener('click', () => setNotesActive(true));
+  notesBtn.addEventListener('click', () => setNotesActive(!notesActive));
   sidebar.appendChild(notesBtn);
 
   const sidebarDivider = document.createElement('div');
@@ -1211,13 +1283,12 @@ function buildSidebar(entries) {
     count.textContent = entry.count;
     btn.appendChild(count);
     btn.addEventListener('click', () => {
-      setNotesActive(false);
       entry.section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     sidebar.appendChild(btn);
     return btn;
   });
-  if (!notesActive) buttons[0].classList.add('active');
+  buttons[0].classList.add('active');
 
   sidebarObserver = new IntersectionObserver((observedEntries) => {
     observedEntries.forEach(obs => {
@@ -1565,6 +1636,7 @@ onAuthStateChanged(auth, (user) => {
     categoryOrder = [];
     notes = '';
     notesActive = false;
+    notesPanel.classList.remove('open');
     notesTextarea.value = '';
     authMode = 'login';
     updateAuthUI();
