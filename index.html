@@ -990,7 +990,7 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Export / import en un clic, pour ne jamais rien perdre</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Réponse du support sous 48h</li>
         </ul>
-        <button type="button" class="btn btn-primary" disabled style="opacity:0.5;cursor:default;">Bientôt disponible</button>
+        <button type="button" id="pro-checkout-btn" class="btn btn-primary" disabled style="opacity:0.5;cursor:default;">Bientôt disponible</button>
       </div>
       <div class="price-card">
         <h3>Illimité</h3>
@@ -1004,7 +1004,7 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Accès anticipé aux nouvelles fonctionnalités</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Support prioritaire, réponse sous 24h</li>
         </ul>
-        <button type="button" class="btn btn-ghost" disabled style="opacity:0.5;cursor:default;">Bientôt disponible</button>
+        <button type="button" id="unlimited-checkout-btn" class="btn btn-ghost" disabled style="opacity:0.5;cursor:default;">Bientôt disponible</button>
       </div>
     </div>
   </section>
@@ -1102,6 +1102,57 @@ document.querySelectorAll('#billing-toggle button').forEach(function(btn) {
     document.getElementById('pricing-grid').classList.toggle('annual', btn.dataset.billing === 'annual');
   });
 });
+
+// --- Stripe Payment Links ---
+// Coller ici les 4 URLs generees dans le dashboard Stripe (Payment Links),
+// une par prix (Pro mensuel/annuel, Illimite mensuel/annuel). Tant qu'une
+// valeur est vide, le bouton correspondant reste desactive ("Bientot disponible").
+const PAYMENT_LINKS = {
+  pro_monthly: '',
+  pro_annual: '',
+  unlimited_monthly: '',
+  unlimited_annual: ''
+};
+
+function setupCheckoutButton(btn, planKey) {
+  function currentBilling() {
+    return document.querySelector('#billing-toggle button.active').dataset.billing;
+  }
+  function currentLink() {
+    return PAYMENT_LINKS[planKey + '_' + currentBilling()];
+  }
+  function refresh() {
+    const link = currentLink();
+    if (link) {
+      btn.disabled = false;
+      btn.style.opacity = '';
+      btn.style.cursor = '';
+      btn.textContent = "S'abonner";
+    } else {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      btn.style.cursor = 'default';
+      btn.textContent = 'Bientôt disponible';
+    }
+  }
+  document.querySelectorAll('#billing-toggle button').forEach(function(b) {
+    b.addEventListener('click', refresh);
+  });
+  btn.addEventListener('click', function() {
+    const link = currentLink();
+    if (!link) return;
+    const email = localStorage.getItem('userEmail') || '';
+    const url = new URL(link);
+    if (email) url.searchParams.set('prefilled_email', email);
+    window.location.href = url.toString();
+  });
+  refresh();
+}
+
+const proCheckoutBtn = document.getElementById('pro-checkout-btn');
+const unlimitedCheckoutBtn = document.getElementById('unlimited-checkout-btn');
+if (proCheckoutBtn) setupCheckoutButton(proCheckoutBtn, 'pro');
+if (unlimitedCheckoutBtn) setupCheckoutButton(unlimitedCheckoutBtn, 'unlimited');
 </script>
 </body>
 </html>
