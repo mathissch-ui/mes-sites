@@ -1114,6 +1114,10 @@ const PAYMENT_LINKS = {
   unlimited_annual: ''
 };
 
+const checkoutParams = new URLSearchParams(window.location.search);
+const checkoutUid = checkoutParams.get('uid') || '';
+const checkoutEmail = checkoutParams.get('email') || '';
+
 function setupCheckoutButton(btn, planKey) {
   function currentBilling() {
     return document.querySelector('#billing-toggle button.active').dataset.billing;
@@ -1141,9 +1145,14 @@ function setupCheckoutButton(btn, planKey) {
   btn.addEventListener('click', function() {
     const link = currentLink();
     if (!link) return;
-    const email = localStorage.getItem('userEmail') || '';
+    if (!checkoutUid) {
+      alert("Connectez-vous d'abord pour souscrire à une offre.");
+      window.location.href = 'app.html';
+      return;
+    }
     const url = new URL(link);
-    if (email) url.searchParams.set('prefilled_email', email);
+    url.searchParams.set('client_reference_id', checkoutUid);
+    if (checkoutEmail) url.searchParams.set('prefilled_email', checkoutEmail);
     window.location.href = url.toString();
   });
   refresh();

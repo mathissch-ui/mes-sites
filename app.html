@@ -759,7 +759,7 @@
               <div class="account-dropdown-divider"></div>
               <div class="account-plan-row">
                 <span>Plan <b id="account-plan-label">Gratuit</b></span>
-                <a href="index.html#pricing" class="account-plan-link">Voir les tarifs</a>
+                <a href="index.html#pricing" id="account-plan-link" class="account-plan-link">Voir les tarifs</a>
               </div>
               <div class="account-dropdown-divider"></div>
               <button type="button" class="account-dropdown-item" id="dropdown-theme-toggle-btn">
@@ -1896,6 +1896,8 @@ onAuthStateChanged(auth, (user) => {
     accountEmail.textContent = user.email;
     const providerId = user.providerData[0] && user.providerData[0].providerId;
     accountProvider.textContent = providerId === 'google.com' ? 'Connecté via Google' : 'Connecté via email';
+    document.getElementById('account-plan-link').href =
+      'index.html?uid=' + encodeURIComponent(user.uid) + '&email=' + encodeURIComponent(user.email) + '#pricing';
 
     unsubscribeSnapshot = onSnapshot(doc(db, 'links', user.uid), (snap) => {
       const data = snap.exists() ? snap.data() : {};
