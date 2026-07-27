@@ -150,6 +150,11 @@
   }
   .btn-icon:hover { color: var(--text); border-color: var(--text-dim); }
 
+  .sort-menu { position: relative; }
+  .sort-btn { display: flex; align-items: center; gap: 6px; }
+  .sort-btn svg { width: 15px; height: 15px; }
+  .sort-dropdown { left: 0; right: auto; width: 180px; }
+
   .account-menu { position: relative; }
   .account-btn {
     width: 36px;
@@ -683,6 +688,16 @@
         Mes Sites</h1></a>
         <div class="header-actions">
           <input type="text" id="search" placeholder="Rechercher...">
+          <div class="sort-menu">
+            <button type="button" class="btn-ghost sort-btn" id="sort-btn" title="Trier les catégories">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
+              Trier
+            </button>
+            <div class="account-dropdown sort-dropdown" id="sort-dropdown">
+              <button type="button" class="account-dropdown-item" data-sort="asc">A → Z</button>
+              <button type="button" class="account-dropdown-item" data-sort="desc">Z → A</button>
+            </div>
+          </div>
           <button class="btn-primary" id="add-btn">+ Ajouter un lien</button>
           <div class="account-menu">
             <button class="account-btn" id="account-btn" title="Compte"><span id="account-avatar"></span></button>
@@ -1134,6 +1149,31 @@ function getCategories() {
   const set = new Set(links.map(l => l.category || 'Sans catégorie'));
   return Array.from(set);
 }
+
+function sortCategories(direction) {
+  const sorted = getCategories().sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
+  categoryOrder = direction === 'desc' ? sorted.reverse() : sorted;
+  saveLinks(links);
+  render();
+}
+
+const sortBtn = document.getElementById('sort-btn');
+const sortDropdown = document.getElementById('sort-dropdown');
+sortBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  sortDropdown.classList.toggle('open');
+});
+sortDropdown.querySelectorAll('[data-sort]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sortCategories(btn.dataset.sort);
+    sortDropdown.classList.remove('open');
+  });
+});
+document.addEventListener('click', (e) => {
+  if (!sortDropdown.contains(e.target) && e.target !== sortBtn && !sortBtn.contains(e.target)) {
+    sortDropdown.classList.remove('open');
+  }
+});
 
 function render() {
   content.innerHTML = '';
