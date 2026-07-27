@@ -458,10 +458,48 @@
     flex-shrink: 0;
   }
   .sidebar-item.active .sidebar-count { background: var(--bg); }
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 4px;
+  }
   .main-content { flex: 1; min-width: 0; }
   @media (max-width: 860px) {
     .sidebar { display: none; }
   }
+
+  .notes-panel { display: none; }
+  .notes-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .notes-panel-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  .notes-save-status {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .notes-textarea {
+    width: 100%;
+    min-height: 460px;
+    resize: vertical;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    outline: none;
+  }
+  .notes-textarea:focus { border-color: var(--accent); }
 
   #dashboard-screen { display: none; }
 
@@ -637,6 +675,13 @@
       <div class="app-body">
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-content">
+          <div class="notes-panel" id="notes-panel">
+            <div class="notes-panel-header">
+              <h2>📝 Bloc-notes</h2>
+              <span class="notes-save-status" id="notes-save-status"></span>
+            </div>
+            <textarea id="notes-textarea" class="notes-textarea" placeholder="Écrivez vos notes ici..."></textarea>
+          </div>
           <div id="content"></div>
 
           <div class="footer-actions">
@@ -779,13 +824,16 @@ function fallbackCopy(text) {
 
 let links = [];
 let categoryOrder = [];
+let notes = '';
+let notesActive = false;
+let notesSaveTimer = null;
 let searchTerm = '';
 let draggedId = null;
 let draggedCategory = null;
 
 function saveLinks(linksToSave) {
   if (!currentUser) return;
-  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder }).catch(err => {
+  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notes }).catch(err => {
     alert('Erreur de sauvegarde : ' + err.message);
   });
 }
@@ -949,8 +997,36 @@ function createCard(link, opts) {
 
 const content = document.getElementById('content');
 const sidebar = document.getElementById('sidebar');
+const notesPanel = document.getElementById('notes-panel');
+const notesTextarea = document.getElementById('notes-textarea');
+const notesSaveStatus = document.getElementById('notes-save-status');
 const searchInput = document.getElementById('search');
 let sidebarObserver = null;
+
+function setNotesActive(active) {
+  notesActive = active;
+  notesPanel.style.display = active ? 'block' : 'none';
+  content.style.display = active ? 'none' : '';
+  const notesBtn = sidebar.querySelector('.sidebar-item-notes');
+  if (notesBtn) notesBtn.classList.toggle('active', active);
+  if (active) {
+    sidebar.querySelectorAll('.sidebar-item:not(.sidebar-item-notes)').forEach(b => b.classList.remove('active'));
+    notesTextarea.focus();
+  }
+}
+
+notesTextarea.addEventListener('input', () => {
+  notes = notesTextarea.value;
+  notesSaveStatus.textContent = 'Enregistrement...';
+  clearTimeout(notesSaveTimer);
+  notesSaveTimer = setTimeout(() => {
+    saveLinks(links);
+    notesSaveStatus.textContent = 'Enregistré';
+    setTimeout(() => {
+      if (notesSaveStatus.textContent === 'Enregistré') notesSaveStatus.textContent = '';
+    }, 1500);
+  }, 600);
+});
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const form = document.getElementById('link-form');
@@ -970,6 +1046,22 @@ function render() {
   content.innerHTML = '';
   sidebar.innerHTML = '';
   if (sidebarObserver) { sidebarObserver.disconnect(); sidebarObserver = null; }
+  notesPanel.style.display = notesActive ? 'block' : 'none';
+  content.style.display = notesActive ? 'none' : '';
+
+  const notesBtn = document.createElement('button');
+  notesBtn.type = 'button';
+  notesBtn.className = 'sidebar-item sidebar-item-notes' + (notesActive ? ' active' : '');
+  const notesLabel = document.createElement('span');
+  notesLabel.textContent = '📝 Bloc-notes';
+  notesBtn.appendChild(notesLabel);
+  notesBtn.addEventListener('click', () => setNotesActive(true));
+  sidebar.appendChild(notesBtn);
+
+  const sidebarDivider = document.createElement('div');
+  sidebarDivider.className = 'sidebar-divider';
+  sidebar.appendChild(sidebarDivider);
+
   const sidebarEntries = [];
 
   const term = searchTerm.trim().toLowerCase();
@@ -1119,12 +1211,13 @@ function buildSidebar(entries) {
     count.textContent = entry.count;
     btn.appendChild(count);
     btn.addEventListener('click', () => {
+      setNotesActive(false);
       entry.section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     sidebar.appendChild(btn);
     return btn;
   });
-  buttons[0].classList.add('active');
+  if (!notesActive) buttons[0].classList.add('active');
 
   sidebarObserver = new IntersectionObserver((observedEntries) => {
     observedEntries.forEach(obs => {
@@ -1461,6 +1554,8 @@ onAuthStateChanged(auth, (user) => {
     unsubscribeSnapshot = onSnapshot(doc(db, 'links', user.uid), (snap) => {
       links = snap.exists() ? (snap.data().items || []) : [];
       categoryOrder = snap.exists() ? (snap.data().categoryOrder || []) : [];
+      notes = snap.exists() ? (snap.data().notes || '') : '';
+      if (document.activeElement !== notesTextarea) notesTextarea.value = notes;
       render();
     }, (err) => {
       alert('Erreur de synchronisation : ' + err.message);
@@ -1468,6 +1563,9 @@ onAuthStateChanged(auth, (user) => {
   } else {
     links = [];
     categoryOrder = [];
+    notes = '';
+    notesActive = false;
+    notesTextarea.value = '';
     authMode = 'login';
     updateAuthUI();
     authForm.reset();
