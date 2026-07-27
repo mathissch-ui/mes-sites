@@ -474,6 +474,10 @@
     top: 90px;
     right: 24px;
     width: min(340px, calc(100vw - 32px));
+    min-width: 260px;
+    min-height: 180px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
     z-index: 150;
     flex-direction: column;
     background: var(--bg-card);
@@ -482,7 +486,7 @@
     box-shadow: 0 16px 44px rgba(0, 0, 0, 0.4);
     overflow: hidden;
   }
-  .notes-panel.open { display: flex; }
+  .notes-panel.open { display: flex; resize: both; }
   .notes-panel-header {
     display: flex;
     align-items: center;
@@ -526,8 +530,9 @@
   .notes-close-btn:hover { background: var(--border); color: var(--text); }
   .notes-textarea {
     width: 100%;
-    height: 280px;
-    resize: vertical;
+    flex: 1;
+    min-height: 120px;
+    resize: none;
     background: var(--bg-card);
     border: none;
     padding: 14px;
@@ -1088,6 +1093,20 @@ if (savedNotesPosition) {
   notesPanel.style.top = savedNotesPosition.top;
   notesPanel.style.right = 'auto';
 }
+
+const savedNotesSize = JSON.parse(localStorage.getItem('notesSize') || 'null');
+if (savedNotesSize) {
+  notesPanel.style.width = savedNotesSize.width;
+  notesPanel.style.height = savedNotesSize.height;
+}
+
+let notesResizeSaveTimer = null;
+new ResizeObserver(() => {
+  clearTimeout(notesResizeSaveTimer);
+  notesResizeSaveTimer = setTimeout(() => {
+    localStorage.setItem('notesSize', JSON.stringify({ width: notesPanel.style.width, height: notesPanel.style.height }));
+  }, 300);
+}).observe(notesPanel);
 
 notesTextarea.addEventListener('input', () => {
   notes = notesTextarea.value;
