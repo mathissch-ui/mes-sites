@@ -507,6 +507,28 @@
   }
   .sidebar-item:hover { background: var(--bg-card-hover); color: var(--text); }
   .sidebar-item.active { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+  .sidebar-item.locked { color: var(--text-dim); }
+  .sidebar-pro-badge {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    background: rgba(91, 140, 255, 0.15);
+    border-radius: 100px;
+    padding: 2px 7px;
+    flex-shrink: 0;
+  }
+  #locked-feature-upgrade-btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+  }
   .main-content { flex: 1; min-width: 0; }
   @media (max-width: 860px) {
     .sidebar { display: none; }
@@ -1189,6 +1211,18 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="locked-feature-overlay">
+    <div class="modal event-modal">
+      <div class="event-modal-icon">🔒</div>
+      <h2 id="locked-feature-title">Fonctionnalité Pro</h2>
+      <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 8px;" id="locked-feature-text"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="locked-feature-cancel-btn">Plus tard</button>
+        <a href="index.html#pricing" class="btn-primary" id="locked-feature-upgrade-btn">Voir les offres</a>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="confirm-overlay">
     <div class="modal">
       <h2>Supprimer le lien</h2>
@@ -1271,6 +1305,10 @@ let currentPlan = 'free';
 function updatePlanUI() {
   const el = document.getElementById('account-plan-label');
   if (el) el.textContent = PLAN_LABELS[currentPlan] || 'Gratuit';
+}
+
+function isPaidPlan() {
+  return currentPlan === 'pro' || currentPlan === 'unlimited' || currentPlan === 'admin';
 }
 
 function faviconUrl(url) {
@@ -1545,6 +1583,22 @@ function setSessionsActive(active) {
   const sessionsBtn = sidebar.querySelector('.sidebar-item-sessions');
   if (sessionsBtn) sessionsBtn.classList.toggle('active', active);
 }
+
+const lockedFeatureOverlay = document.getElementById('locked-feature-overlay');
+const lockedFeatureText = document.getElementById('locked-feature-text');
+const lockedFeatureCancelBtn = document.getElementById('locked-feature-cancel-btn');
+
+function openLockedModal(featureName) {
+  lockedFeatureText.textContent = `"${featureName}" est réservé aux offres Pro et Illimité. Passez à un forfait payant pour y accéder.`;
+  lockedFeatureOverlay.classList.add('open');
+}
+function closeLockedModal() {
+  lockedFeatureOverlay.classList.remove('open');
+}
+lockedFeatureCancelBtn.addEventListener('click', closeLockedModal);
+lockedFeatureOverlay.addEventListener('click', (e) => {
+  if (e.target === lockedFeatureOverlay) closeLockedModal();
+});
 
 function openAgendaScreen() {
   dashboardScreen.style.display = 'none';
@@ -2129,22 +2183,42 @@ function render() {
   notesBtn.addEventListener('click', () => setNotesActive(!notesActive));
   sidebar.appendChild(notesBtn);
 
+  const agendaLocked = !isPaidPlan();
   const agendaBtn = document.createElement('button');
   agendaBtn.type = 'button';
-  agendaBtn.className = 'sidebar-item sidebar-item-agenda';
+  agendaBtn.className = 'sidebar-item sidebar-item-agenda' + (agendaLocked ? ' locked' : '');
   const agendaLabel = document.createElement('span');
   agendaLabel.textContent = '🗓️ Agenda';
   agendaBtn.appendChild(agendaLabel);
-  agendaBtn.addEventListener('click', openAgendaScreen);
+  if (agendaLocked) {
+    const agendaBadge = document.createElement('span');
+    agendaBadge.className = 'sidebar-pro-badge';
+    agendaBadge.textContent = 'PRO';
+    agendaBtn.appendChild(agendaBadge);
+  }
+  agendaBtn.addEventListener('click', () => {
+    if (agendaLocked) openLockedModal('Agenda');
+    else openAgendaScreen();
+  });
   sidebar.appendChild(agendaBtn);
 
+  const sessionsLocked = !isPaidPlan();
   const sessionsBtn = document.createElement('button');
   sessionsBtn.type = 'button';
-  sessionsBtn.className = 'sidebar-item sidebar-item-sessions' + (sessionsActive ? ' active' : '');
+  sessionsBtn.className = 'sidebar-item sidebar-item-sessions' + (sessionsActive ? ' active' : '') + (sessionsLocked ? ' locked' : '');
   const sessionsLabel = document.createElement('span');
   sessionsLabel.textContent = '⏱️ Sessions de travail';
   sessionsBtn.appendChild(sessionsLabel);
-  sessionsBtn.addEventListener('click', () => setSessionsActive(!sessionsActive));
+  if (sessionsLocked) {
+    const sessionsBadge = document.createElement('span');
+    sessionsBadge.className = 'sidebar-pro-badge';
+    sessionsBadge.textContent = 'PRO';
+    sessionsBtn.appendChild(sessionsBadge);
+  }
+  sessionsBtn.addEventListener('click', () => {
+    if (sessionsLocked) openLockedModal('Sessions de travail');
+    else setSessionsActive(!sessionsActive);
+  });
   sidebar.appendChild(sessionsBtn);
 
   const term = searchTerm.trim().toLowerCase();
@@ -2593,8 +2667,9 @@ onAuthStateChanged(auth, (user) => {
     accountEmail.textContent = user.email;
     const providerId = user.providerData[0] && user.providerData[0].providerId;
     accountProvider.textContent = providerId === 'google.com' ? 'Connecté via Google' : 'Connecté via email';
-    document.getElementById('account-plan-link').href =
-      'index.html?uid=' + encodeURIComponent(user.uid) + '&email=' + encodeURIComponent(user.email) + '#pricing';
+    const pricingUrl = 'index.html?uid=' + encodeURIComponent(user.uid) + '&email=' + encodeURIComponent(user.email) + '#pricing';
+    document.getElementById('account-plan-link').href = pricingUrl;
+    document.getElementById('locked-feature-upgrade-btn').href = pricingUrl;
 
     unsubscribeSnapshot = onSnapshot(doc(db, 'links', user.uid), (snap) => {
       const data = snap.exists() ? snap.data() : {};
