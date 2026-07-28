@@ -250,6 +250,25 @@
   }
   .account-plan-link:hover { text-decoration: underline; }
 
+  .account-accent-row { padding: 8px 8px 10px; }
+  .account-accent-row > span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .account-accent-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .accent-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    padding: 0;
+  }
+  .accent-swatch.selected { border-color: var(--text); }
+
   .category {
     margin-bottom: 36px;
   }
@@ -671,6 +690,55 @@
   }
   .session-play-btn:hover, .session-del-btn:hover { background: var(--border); color: var(--text); }
 
+  .sessions-view-toggle {
+    display: flex;
+    gap: 4px;
+    padding: 10px 14px 0;
+  }
+  .sessions-view-btn {
+    flex: 1;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .sessions-view-btn.active { background: var(--bg-card-hover); color: var(--text); border-color: var(--text-dim); }
+  .session-stats-summary {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+  }
+  .session-stats-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 140px;
+    padding: 8px 4px 0;
+  }
+  .session-stats-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+  }
+  .session-stats-bar {
+    width: 60%;
+    min-height: 3px;
+    background: var(--accent);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.2s;
+  }
+  .session-stats-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
   /* Mini calendrier (reutilise dans la page Agenda) */
   .agenda-cal-header {
     display: flex;
@@ -1053,6 +1121,11 @@
                 <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                 <span id="dropdown-theme-label">Thème sombre</span>
               </button>
+              <div class="account-accent-row">
+                <span>Couleur d'accent<span class="sidebar-pro-badge" id="accent-pro-badge">PRO</span></span>
+                <div class="account-accent-swatches" id="account-accent-swatches"></div>
+              </div>
+              <div class="account-dropdown-divider"></div>
               <button type="button" class="account-dropdown-item" id="reset-password-btn">Réinitialiser le mot de passe</button>
               <div class="account-dropdown-divider"></div>
               <button type="button" class="account-dropdown-item danger" id="delete-account-btn">Supprimer mon compte</button>
@@ -1083,7 +1156,11 @@
                 <button type="button" class="floating-close-btn" id="sessions-close-btn" title="Fermer" aria-label="Fermer">×</button>
               </div>
             </div>
-            <div class="sessions-body">
+            <div class="sessions-view-toggle">
+              <button type="button" class="sessions-view-btn active" data-view="tasks">Tâches</button>
+              <button type="button" class="sessions-view-btn" data-view="stats">📊 Stats</button>
+            </div>
+            <div class="sessions-body" id="sessions-tasks-view">
               <div class="timer-display" id="timer-display">00:00:00</div>
               <div class="timer-task-name" id="timer-task-name">Aucune tâche active</div>
               <div class="timer-controls">
@@ -1096,6 +1173,10 @@
                 <button type="button" class="btn-ghost" id="session-add-btn">+</button>
               </div>
               <div class="sessions-list" id="sessions-list"></div>
+            </div>
+            <div class="sessions-body" id="sessions-stats-view" style="display:none;">
+              <div class="session-stats-summary" id="session-stats-summary">—</div>
+              <div class="session-stats-chart" id="session-stats-chart"></div>
             </div>
           </div>
 
@@ -1305,6 +1386,7 @@ let currentPlan = 'free';
 function updatePlanUI() {
   const el = document.getElementById('account-plan-label');
   if (el) el.textContent = PLAN_LABELS[currentPlan] || 'Gratuit';
+  buildAccentSwatches();
 }
 
 function isPaidPlan() {
@@ -1353,6 +1435,7 @@ let sessionsActive = false;
 let activeSessionId = null;
 let timerStartTs = null;
 let timerInterval = null;
+let timeLog = [];
 let events = [];
 let agendaViewYear = new Date().getFullYear();
 let agendaViewMonth = new Date().getMonth();
@@ -1364,7 +1447,7 @@ let draggedCategory = null;
 
 function saveLinks(linksToSave) {
   if (!currentUser) return;
-  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notes, sessions, events, plan: currentPlan }).catch(err => {
+  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notes, sessions, events, timeLog, plan: currentPlan }).catch(err => {
     alert('Erreur de sauvegarde : ' + err.message);
   });
 }
@@ -1787,10 +1870,21 @@ function startTimer(id) {
   renderSessions();
 }
 
+function logTime(seconds) {
+  if (seconds <= 0) return;
+  const today = new Date();
+  const iso = isoDate(today.getFullYear(), today.getMonth(), today.getDate());
+  const entry = timeLog.find(t => t.date === iso);
+  if (entry) entry.seconds += seconds;
+  else timeLog.push({ date: iso, seconds });
+}
+
 function pauseTimer() {
   if (!activeSessionId || !timerStartTs) return;
   const s = sessions.find(x => x.id === activeSessionId);
-  if (s) s.totalSeconds += (Date.now() - timerStartTs) / 1000;
+  const elapsed = (Date.now() - timerStartTs) / 1000;
+  if (s) s.totalSeconds += elapsed;
+  logTime(elapsed);
   clearInterval(timerInterval);
   timerInterval = null;
   timerStartTs = null;
@@ -1811,6 +1905,57 @@ function stopAndFinishTimer() {
   if (s) { s.done = true; saveLinks(links); renderSessions(); }
 }
 
+function renderSessionStats() {
+  const chart = document.getElementById('session-stats-chart');
+  const summary = document.getElementById('session-stats-summary');
+  chart.innerHTML = '';
+
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(d);
+  }
+  const dayTotals = days.map(d => {
+    const iso = isoDate(d.getFullYear(), d.getMonth(), d.getDate());
+    const entry = timeLog.find(t => t.date === iso);
+    return { date: d, seconds: entry ? entry.seconds : 0 };
+  });
+  const weekTotal = dayTotals.reduce((sum, d) => sum + d.seconds, 0);
+  const maxSeconds = Math.max(...dayTotals.map(d => d.seconds), 1);
+
+  summary.textContent = weekTotal > 0 ? 'Cette semaine : ' + formatDuration(weekTotal) : 'Aucune session cette semaine';
+
+  dayTotals.forEach(d => {
+    const col = document.createElement('div');
+    col.className = 'session-stats-col';
+
+    const bar = document.createElement('div');
+    bar.className = 'session-stats-bar';
+    bar.style.height = (d.seconds > 0 ? Math.max(6, (d.seconds / maxSeconds) * 100) : 0) + '%';
+    bar.title = formatDuration(d.seconds);
+    col.appendChild(bar);
+
+    const label = document.createElement('div');
+    label.className = 'session-stats-label';
+    label.textContent = AGENDA_DOW_SHORT[d.date.getDay()].slice(0, 2);
+    col.appendChild(label);
+
+    chart.appendChild(col);
+  });
+}
+
+document.querySelectorAll('.sessions-view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sessions-view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const view = btn.dataset.view;
+    document.getElementById('sessions-tasks-view').style.display = view === 'tasks' ? '' : 'none';
+    document.getElementById('sessions-stats-view').style.display = view === 'stats' ? '' : 'none';
+    if (view === 'stats') renderSessionStats();
+  });
+});
+
 sessionAddBtn.addEventListener('click', () => { addSession(sessionNewInput.value); sessionNewInput.value = ''; });
 sessionNewInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { addSession(sessionNewInput.value); sessionNewInput.value = ''; }
@@ -1821,7 +1966,9 @@ timerStopBtn.addEventListener('click', stopAndFinishTimer);
 window.addEventListener('beforeunload', () => {
   if (activeSessionId && timerStartTs) {
     const s = sessions.find(x => x.id === activeSessionId);
-    if (s) s.totalSeconds += (Date.now() - timerStartTs) / 1000;
+    const elapsed = (Date.now() - timerStartTs) / 1000;
+    if (s) s.totalSeconds += elapsed;
+    logTime(elapsed);
     saveLinks(links);
   }
 });
@@ -2679,6 +2826,7 @@ onAuthStateChanged(auth, (user) => {
       if (document.activeElement !== notesTextarea) notesTextarea.value = notes;
       sessions = data.sessions || [];
       events = data.events || [];
+      timeLog = data.timeLog || [];
 
       const hadPlan = !!data.plan;
       currentPlan = data.plan || (ADMIN_EMAILS.includes(user.email) ? 'admin' : 'free');
@@ -2710,6 +2858,7 @@ onAuthStateChanged(auth, (user) => {
     timerTaskName.textContent = 'Aucune tâche active';
     timerPauseBtn.disabled = true;
     timerStopBtn.disabled = true;
+    timeLog = [];
     events = [];
     agendaScreen.style.display = 'none';
     authMode = 'login';
@@ -2739,6 +2888,59 @@ function toggleTheme() {
 document.getElementById('theme-toggle-auth-btn').addEventListener('click', toggleTheme);
 document.getElementById('dropdown-theme-toggle-btn').addEventListener('click', toggleTheme);
 updateThemeLabel();
+
+// --- Couleur d'accent (Pro/Illimité) ---
+
+const ACCENT_PRESETS = [
+  { name: 'Bleu', value: '#5b8cff', hover: '#7aa0ff' },
+  { name: 'Violet', value: '#a78bfa', hover: '#c4b5fd' },
+  { name: 'Vert', value: '#34d399', hover: '#6ee7b7' },
+  { name: 'Orange', value: '#fb923c', hover: '#fdba74' },
+  { name: 'Rose', value: '#f472b6', hover: '#f9a8d4' },
+  { name: 'Rouge', value: '#f87171', hover: '#fca5a5' }
+];
+
+function applyAccentColor(hex, hoverHex) {
+  document.documentElement.style.setProperty('--accent', hex);
+  document.documentElement.style.setProperty('--accent-hover', hoverHex);
+}
+
+function getSavedAccent() {
+  return localStorage.getItem('accentColor') || ACCENT_PRESETS[0].value;
+}
+
+(function initAccentColor() {
+  const preset = ACCENT_PRESETS.find(p => p.value === getSavedAccent());
+  if (preset) applyAccentColor(preset.value, preset.hover);
+})();
+
+function buildAccentSwatches() {
+  const wrap = document.getElementById('account-accent-swatches');
+  const badge = document.getElementById('accent-pro-badge');
+  wrap.innerHTML = '';
+  badge.style.display = isPaidPlan() ? 'none' : '';
+  const selected = getSavedAccent();
+
+  ACCENT_PRESETS.forEach(preset => {
+    const swatch = document.createElement('button');
+    swatch.type = 'button';
+    swatch.className = 'accent-swatch' + (preset.value === selected ? ' selected' : '');
+    swatch.style.background = preset.value;
+    swatch.title = preset.name;
+    swatch.addEventListener('click', () => {
+      if (!isPaidPlan()) {
+        accountDropdown.classList.remove('open');
+        openLockedModal("Couleur d'accent personnalisée");
+        return;
+      }
+      applyAccentColor(preset.value, preset.hover);
+      localStorage.setItem('accentColor', preset.value);
+      buildAccentSwatches();
+    });
+    wrap.appendChild(swatch);
+  });
+}
+buildAccentSwatches();
 
 // --- Menu de compte ---
 
