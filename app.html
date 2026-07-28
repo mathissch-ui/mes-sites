@@ -595,15 +595,7 @@
   }
   .session-play-btn:hover, .session-del-btn:hover { background: var(--border); color: var(--text); }
 
-  .agenda-panel { top: 440px; right: 24px; width: min(320px, calc(100vw - 32px)); }
-  .agenda-body {
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow: auto;
-    flex: 1;
-  }
+  /* Mini calendrier (reutilise dans la page Agenda) */
   .agenda-cal-header {
     display: flex;
     align-items: center;
@@ -627,6 +619,7 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 2px;
+    margin-top: 10px;
   }
   .agenda-cal-daylabel {
     font-size: 10px;
@@ -647,6 +640,7 @@
   .agenda-cal-cell:hover { background: var(--bg-card-hover); }
   .agenda-cal-cell.empty { cursor: default; visibility: hidden; }
   .agenda-cal-cell.today { background: var(--accent); color: #fff; font-weight: 700; }
+  .agenda-cal-cell.selected:not(.today) { border: 1px solid var(--accent); }
   .agenda-cal-cell.has-event::after {
     content: '';
     position: absolute;
@@ -659,47 +653,112 @@
     background: var(--accent);
   }
   .agenda-cal-cell.today.has-event::after { background: #fff; }
-  .agenda-divider { height: 1px; background: var(--border); }
-  .agenda-add-row { display: flex; gap: 6px; flex-wrap: wrap; }
-  .agenda-add-row input[type="date"] { flex-shrink: 0; width: 130px; }
-  .agenda-add-row input[type="text"] { flex: 1; min-width: 100px; }
-  .agenda-list { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
-  .agenda-row {
+
+  /* Page Agenda (vue pleine page) */
+  #agenda-screen { display: none; min-height: 100vh; }
+  .agenda-page { padding: 32px 24px 60px; max-width: 1300px; }
+  .agenda-page-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 4px;
-    border-radius: 6px;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
   }
-  .agenda-row:hover { background: var(--bg-card-hover); }
-  .agenda-row.done .agenda-row-name { text-decoration: line-through; color: var(--text-dim); }
-  .agenda-row-date {
-    font-size: 11px;
-    color: var(--text-dim);
-    white-space: nowrap;
-    width: 44px;
+  .agenda-page-header-left { display: flex; align-items: center; gap: 12px; }
+  .agenda-page-header-left h1 {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+  .agenda-page-header-center { display: flex; align-items: center; gap: 6px; }
+  .agenda-week-label { font-size: 15px; font-weight: 600; margin-left: 8px; white-space: nowrap; }
+  .agenda-page-body { display: flex; gap: 24px; align-items: flex-start; }
+  .agenda-mini-cal {
+    width: 220px;
     flex-shrink: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
   }
-  .agenda-row-name {
+  .agenda-week-wrap {
     flex: 1;
-    font-size: 13px;
+    min-width: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
-  .agenda-del-btn {
-    width: 22px;
-    height: 22px;
-    padding: 0;
-    border-radius: 5px;
-    background: transparent;
-    color: var(--text-dim);
-    font-size: 12px;
+  .agenda-week-days {
+    display: grid;
+    grid-template-columns: 52px repeat(7, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  .agenda-week-day-head { text-align: center; padding: 10px 4px; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+  .agenda-week-day-head .num {
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    margin: 3px auto 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
   }
-  .agenda-del-btn:hover { background: var(--border); color: var(--text); }
+  .agenda-week-day-head.today .num { background: var(--accent); color: #fff; }
+  .agenda-week-scroll { max-height: 620px; overflow-y: auto; }
+  .agenda-week-grid { display: grid; grid-template-columns: 52px repeat(7, 1fr); position: relative; }
+  .agenda-hour-label {
+    grid-column: 1;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+    padding-right: 8px;
+    transform: translateY(-7px);
+    height: 48px;
+    box-sizing: border-box;
+  }
+  .agenda-day-col {
+    position: relative;
+    border-left: 1px solid var(--border);
+    background-image: repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 1px, transparent 1px, transparent 48px);
+    cursor: pointer;
+  }
+  .agenda-now-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--danger); z-index: 3; pointer-events: none; }
+  .agenda-now-line::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--danger);
+  }
+  .agenda-event-block {
+    position: absolute;
+    left: 3px;
+    right: 3px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-size: 11px;
+    line-height: 1.35;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+  }
+  .agenda-event-block b { display: block; font-size: 12px; font-weight: 600; }
+  .agenda-event-block:hover { filter: brightness(1.1); }
+  @media (max-width: 900px) {
+    .agenda-mini-cal { display: none; }
+  }
 
   #dashboard-screen { display: none; }
 
@@ -919,32 +978,6 @@
             </div>
           </div>
 
-          <div class="floating-panel agenda-panel" id="agenda-panel">
-            <div class="floating-panel-header" id="agenda-panel-header">
-              <h2>🗓️ Agenda</h2>
-              <div class="floating-panel-header-right">
-                <button type="button" class="floating-close-btn" id="agenda-close-btn" title="Fermer" aria-label="Fermer">×</button>
-              </div>
-            </div>
-            <div class="agenda-body">
-              <div class="agenda-calendar">
-                <div class="agenda-cal-header">
-                  <button type="button" id="agenda-prev-month" title="Mois précédent">‹</button>
-                  <span id="agenda-month-label">—</span>
-                  <button type="button" id="agenda-next-month" title="Mois suivant">›</button>
-                </div>
-                <div class="agenda-cal-grid" id="agenda-cal-grid"></div>
-              </div>
-              <div class="agenda-divider"></div>
-              <div class="agenda-add-row">
-                <input type="date" id="agenda-new-date">
-                <input type="text" id="agenda-new-title" placeholder="Nouvel événement...">
-                <button type="button" class="btn-ghost" id="agenda-add-btn">+</button>
-              </div>
-              <div class="agenda-list" id="agenda-list"></div>
-            </div>
-          </div>
-
           <div id="content"></div>
 
           <div class="footer-actions">
@@ -954,6 +987,74 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div id="agenda-screen">
+    <div class="wrap agenda-page">
+      <div class="agenda-page-header">
+        <div class="agenda-page-header-left">
+          <button type="button" class="btn-icon" id="agenda-back-btn" title="Retour au tableau de bord">←</button>
+          <h1>🗓️ Agenda</h1>
+        </div>
+        <div class="agenda-page-header-center">
+          <button type="button" class="btn-ghost" id="agenda-today-btn">Aujourd'hui</button>
+          <button type="button" class="btn-icon" id="agenda-week-prev" title="Semaine précédente">‹</button>
+          <button type="button" class="btn-icon" id="agenda-week-next" title="Semaine suivante">›</button>
+          <span class="agenda-week-label" id="agenda-week-label">—</span>
+        </div>
+        <div class="agenda-page-header-right">
+          <button type="button" class="btn-primary" id="agenda-new-event-btn">+ Événement</button>
+        </div>
+      </div>
+      <div class="agenda-page-body">
+        <aside class="agenda-mini-cal">
+          <div class="agenda-cal-header">
+            <button type="button" id="agenda-mini-prev-month" title="Mois précédent">‹</button>
+            <span id="agenda-mini-month-label">—</span>
+            <button type="button" id="agenda-mini-next-month" title="Mois suivant">›</button>
+          </div>
+          <div class="agenda-cal-grid" id="agenda-mini-cal-grid"></div>
+        </aside>
+        <div class="agenda-week-wrap">
+          <div class="agenda-week-days" id="agenda-week-days"></div>
+          <div class="agenda-week-scroll" id="agenda-week-scroll">
+            <div class="agenda-week-grid" id="agenda-week-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="event-modal-overlay">
+    <div class="modal">
+      <h2 id="event-modal-title">Nouvel événement</h2>
+      <form id="event-form">
+        <input type="hidden" id="event-id">
+        <div class="field">
+          <label for="event-title">Titre</label>
+          <input type="text" id="event-title" required placeholder="Ex : Réunion équipe">
+        </div>
+        <div class="field">
+          <label for="event-date">Date</label>
+          <input type="date" id="event-date" required>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div class="field" style="flex:1;">
+            <label for="event-start">Début</label>
+            <input type="time" id="event-start" required>
+          </div>
+          <div class="field" style="flex:1;">
+            <label for="event-end">Fin</label>
+            <input type="time" id="event-end" required>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" id="event-delete-btn" style="display:none; color: var(--danger); margin-right:auto;">Supprimer</button>
+          <button type="button" class="btn-ghost" id="event-cancel-btn">Annuler</button>
+          <button type="submit" class="btn-primary">Enregistrer</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -1110,9 +1211,10 @@ let activeSessionId = null;
 let timerStartTs = null;
 let timerInterval = null;
 let events = [];
-let agendaActive = false;
 let agendaViewYear = new Date().getFullYear();
 let agendaViewMonth = new Date().getMonth();
+let agendaSelectedIso = null;
+let agendaWeekStart = mondayOf(new Date());
 let searchTerm = '';
 let draggedId = null;
 let draggedCategory = null;
@@ -1298,16 +1400,29 @@ const timerDisplay = document.getElementById('timer-display');
 const timerTaskName = document.getElementById('timer-task-name');
 const timerPauseBtn = document.getElementById('timer-pause-btn');
 const timerStopBtn = document.getElementById('timer-stop-btn');
-const agendaPanel = document.getElementById('agenda-panel');
-const agendaPanelHeader = document.getElementById('agenda-panel-header');
-const agendaCloseBtn = document.getElementById('agenda-close-btn');
-const agendaMonthLabel = document.getElementById('agenda-month-label');
-const agendaCalGrid = document.getElementById('agenda-cal-grid');
-const agendaList = document.getElementById('agenda-list');
-const agendaNewDate = document.getElementById('agenda-new-date');
-const agendaNewTitle = document.getElementById('agenda-new-title');
-const agendaAddBtn = document.getElementById('agenda-add-btn');
 const searchInput = document.getElementById('search');
+
+const agendaScreen = document.getElementById('agenda-screen');
+const agendaBackBtn = document.getElementById('agenda-back-btn');
+const agendaTodayBtn = document.getElementById('agenda-today-btn');
+const agendaWeekPrevBtn = document.getElementById('agenda-week-prev');
+const agendaWeekNextBtn = document.getElementById('agenda-week-next');
+const agendaWeekLabel = document.getElementById('agenda-week-label');
+const agendaNewEventBtn = document.getElementById('agenda-new-event-btn');
+const agendaMiniMonthLabel = document.getElementById('agenda-mini-month-label');
+const agendaMiniCalGrid = document.getElementById('agenda-mini-cal-grid');
+const agendaWeekDaysEl = document.getElementById('agenda-week-days');
+const agendaWeekGridEl = document.getElementById('agenda-week-grid');
+const eventModalOverlay = document.getElementById('event-modal-overlay');
+const eventModalTitle = document.getElementById('event-modal-title');
+const eventForm = document.getElementById('event-form');
+const eventIdInput = document.getElementById('event-id');
+const eventTitleInput = document.getElementById('event-title');
+const eventDateInput = document.getElementById('event-date');
+const eventStartInput = document.getElementById('event-start');
+const eventEndInput = document.getElementById('event-end');
+const eventDeleteBtn = document.getElementById('event-delete-btn');
+const eventCancelBtn = document.getElementById('event-cancel-btn');
 
 function setNotesActive(active) {
   notesActive = active;
@@ -1324,11 +1439,19 @@ function setSessionsActive(active) {
   if (sessionsBtn) sessionsBtn.classList.toggle('active', active);
 }
 
-function setAgendaActive(active) {
-  agendaActive = active;
-  agendaPanel.classList.toggle('open', active);
-  const agendaBtn = sidebar.querySelector('.sidebar-item-agenda');
-  if (agendaBtn) agendaBtn.classList.toggle('active', active);
+function openAgendaScreen() {
+  dashboardScreen.style.display = 'none';
+  agendaScreen.style.display = 'block';
+  renderAgendaAll();
+  requestAnimationFrame(() => {
+    const scroll = document.getElementById('agenda-week-scroll');
+    if (scroll) scroll.scrollTop = 7 * 48;
+  });
+}
+
+function closeAgendaScreen() {
+  agendaScreen.style.display = 'none';
+  dashboardScreen.style.display = 'block';
 }
 
 function makeFloatingPanel(panel, header, closeBtn, onClose, storageKey) {
@@ -1382,7 +1505,8 @@ function makeFloatingPanel(panel, header, closeBtn, onClose, storageKey) {
 
 makeFloatingPanel(notesPanel, notesPanelHeader, notesCloseBtn, () => setNotesActive(false), 'notes');
 makeFloatingPanel(sessionsPanel, sessionsPanelHeader, sessionsCloseBtn, () => setSessionsActive(false), 'sessions');
-makeFloatingPanel(agendaPanel, agendaPanelHeader, agendaCloseBtn, () => setAgendaActive(false), 'agenda');
+
+agendaBackBtn.addEventListener('click', closeAgendaScreen);
 
 notesTextarea.addEventListener('input', () => {
   notes = notesTextarea.value;
@@ -1543,24 +1667,41 @@ window.addEventListener('beforeunload', () => {
 
 const AGENDA_MONTH_NAMES = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 const AGENDA_DAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const AGENDA_DOW_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const AGENDA_HOUR_HEIGHT = 48;
 
 function pad2(n) { return String(n).padStart(2, '0'); }
 function isoDate(y, m, d) { return `${y}-${pad2(m + 1)}-${pad2(d)}`; }
 
-function formatEventDate(iso) {
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+function mondayOf(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  d.setDate(d.getDate() + diff);
+  return d;
 }
 
-function renderAgendaCalendar() {
-  agendaMonthLabel.textContent = AGENDA_MONTH_NAMES[agendaViewMonth] + ' ' + agendaViewYear;
-  agendaCalGrid.innerHTML = '';
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function formatWeekRange(start, end) {
+  const startStr = start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  const endStr = end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  return startStr + ' – ' + endStr;
+}
+
+function renderMiniCal() {
+  agendaMiniMonthLabel.textContent = AGENDA_MONTH_NAMES[agendaViewMonth] + ' ' + agendaViewYear;
+  agendaMiniCalGrid.innerHTML = '';
 
   AGENDA_DAY_LABELS.forEach(l => {
     const label = document.createElement('div');
     label.className = 'agenda-cal-daylabel';
     label.textContent = l;
-    agendaCalGrid.appendChild(label);
+    agendaMiniCalGrid.appendChild(label);
   });
 
   const firstDay = new Date(agendaViewYear, agendaViewMonth, 1);
@@ -1569,114 +1710,203 @@ function renderAgendaCalendar() {
   const daysInMonth = new Date(agendaViewYear, agendaViewMonth + 1, 0).getDate();
   const today = new Date();
   const todayIso = isoDate(today.getFullYear(), today.getMonth(), today.getDate());
+  const weekEnd = new Date(agendaWeekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
 
   for (let i = 0; i < startOffset; i++) {
     const empty = document.createElement('div');
     empty.className = 'agenda-cal-cell empty';
-    agendaCalGrid.appendChild(empty);
+    agendaMiniCalGrid.appendChild(empty);
   }
   for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(agendaViewYear, agendaViewMonth, d);
     const iso = isoDate(agendaViewYear, agendaViewMonth, d);
     const cell = document.createElement('div');
     cell.className = 'agenda-cal-cell';
     if (iso === todayIso) cell.classList.add('today');
+    if (dateObj >= agendaWeekStart && dateObj <= weekEnd) cell.classList.add('selected');
     if (events.some(e => e.date === iso)) cell.classList.add('has-event');
     cell.textContent = d;
     cell.addEventListener('click', () => {
-      agendaNewDate.value = iso;
-      agendaNewTitle.focus();
+      agendaWeekStart = mondayOf(dateObj);
+      renderAgendaAll();
     });
-    agendaCalGrid.appendChild(cell);
+    agendaMiniCalGrid.appendChild(cell);
   }
 }
 
-function renderAgendaList() {
-  agendaList.innerHTML = '';
-  const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
-  sorted.forEach(ev => {
-    const row = document.createElement('div');
-    row.className = 'agenda-row' + (ev.done ? ' done' : '');
+function renderAgendaWeek() {
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(agendaWeekStart);
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+  agendaWeekLabel.textContent = formatWeekRange(days[0], days[6]);
 
-    const check = document.createElement('input');
-    check.type = 'checkbox';
-    check.checked = ev.done;
-    check.addEventListener('change', () => toggleEventDone(ev.id));
-    row.appendChild(check);
+  const today = new Date();
+  const todayIso = isoDate(today.getFullYear(), today.getMonth(), today.getDate());
 
-    const dateEl = document.createElement('span');
-    dateEl.className = 'agenda-row-date';
-    dateEl.textContent = formatEventDate(ev.date);
-    row.appendChild(dateEl);
+  agendaWeekDaysEl.innerHTML = '<div></div>';
+  days.forEach(d => {
+    const iso = isoDate(d.getFullYear(), d.getMonth(), d.getDate());
+    const head = document.createElement('div');
+    head.className = 'agenda-week-day-head' + (iso === todayIso ? ' today' : '');
+    head.innerHTML = '<div>' + AGENDA_DOW_SHORT[d.getDay()] + '</div><div class="num">' + d.getDate() + '</div>';
+    agendaWeekDaysEl.appendChild(head);
+  });
 
-    const nameEl = document.createElement('span');
-    nameEl.className = 'agenda-row-name';
-    nameEl.textContent = ev.title;
-    row.appendChild(nameEl);
+  agendaWeekGridEl.innerHTML = '';
+  agendaWeekGridEl.style.gridTemplateRows = `repeat(24, ${AGENDA_HOUR_HEIGHT}px)`;
 
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.className = 'agenda-del-btn';
-    delBtn.textContent = '×';
-    delBtn.title = 'Supprimer';
-    delBtn.addEventListener('click', () => deleteEvent(ev.id));
-    row.appendChild(delBtn);
+  for (let h = 0; h < 24; h++) {
+    const label = document.createElement('div');
+    label.className = 'agenda-hour-label';
+    label.style.gridColumn = '1 / span 1';
+    label.style.gridRow = (h + 1) + ' / span 1';
+    label.textContent = pad2(h) + ':00';
+    agendaWeekGridEl.appendChild(label);
+  }
 
-    agendaList.appendChild(row);
+  days.forEach((d, dayIdx) => {
+    const iso = isoDate(d.getFullYear(), d.getMonth(), d.getDate());
+    const col = document.createElement('div');
+    col.className = 'agenda-day-col';
+    col.style.gridColumn = (dayIdx + 2) + ' / span 1';
+    col.style.gridRow = '1 / span 24';
+
+    col.addEventListener('click', (e) => {
+      if (e.target !== col) return;
+      const rect = col.getBoundingClientRect();
+      const hour = Math.max(0, Math.min(23, Math.floor((e.clientY - rect.top) / AGENDA_HOUR_HEIGHT)));
+      openEventModal(null, iso, hour);
+    });
+
+    events.filter(ev => ev.date === iso).forEach(ev => {
+      const [sh, sm] = (ev.startTime || '09:00').split(':').map(Number);
+      const [eh, em] = (ev.endTime || '10:00').split(':').map(Number);
+      const startMin = sh * 60 + sm;
+      const endMin = Math.max(startMin + 15, eh * 60 + em);
+      const block = document.createElement('div');
+      block.className = 'agenda-event-block';
+      block.style.top = (startMin / 60 * AGENDA_HOUR_HEIGHT) + 'px';
+      block.style.height = ((endMin - startMin) / 60 * AGENDA_HOUR_HEIGHT - 2) + 'px';
+      block.innerHTML = '<b>' + escapeHtml(ev.title) + '</b>' + (ev.startTime || '') + (ev.endTime ? '–' + ev.endTime : '');
+      block.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEventModal(ev);
+      });
+      col.appendChild(block);
+    });
+
+    if (iso === todayIso) {
+      const nowMin = today.getHours() * 60 + today.getMinutes();
+      const line = document.createElement('div');
+      line.className = 'agenda-now-line';
+      line.style.top = (nowMin / 60 * AGENDA_HOUR_HEIGHT) + 'px';
+      col.appendChild(line);
+    }
+
+    agendaWeekGridEl.appendChild(col);
   });
 }
 
-function renderAgenda() {
-  renderAgendaCalendar();
-  renderAgendaList();
+function renderAgendaAll() {
+  renderMiniCal();
+  renderAgendaWeek();
 }
 
-function addEvent(dateStr, title) {
-  title = title.trim();
-  if (!title || !dateStr) return;
-  events.push({ id: uid(), date: dateStr, title, done: false });
-  saveLinks(links);
-  renderAgenda();
-}
-
-function toggleEventDone(id) {
-  const ev = events.find(e => e.id === id);
-  if (!ev) return;
-  ev.done = !ev.done;
-  saveLinks(links);
-  renderAgendaList();
-}
-
-function deleteEvent(id) {
-  events = events.filter(e => e.id !== id);
-  saveLinks(links);
-  renderAgenda();
-}
-
-agendaAddBtn.addEventListener('click', () => {
-  addEvent(agendaNewDate.value, agendaNewTitle.value);
-  agendaNewTitle.value = '';
-});
-agendaNewTitle.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    addEvent(agendaNewDate.value, agendaNewTitle.value);
-    agendaNewTitle.value = '';
+function openEventModal(event, prefillIso, prefillHour) {
+  if (event) {
+    eventModalTitle.textContent = "Modifier l'événement";
+    eventIdInput.value = event.id;
+    eventTitleInput.value = event.title;
+    eventDateInput.value = event.date;
+    eventStartInput.value = event.startTime || '09:00';
+    eventEndInput.value = event.endTime || '10:00';
+    eventDeleteBtn.style.display = '';
+  } else {
+    eventModalTitle.textContent = 'Nouvel événement';
+    eventIdInput.value = '';
+    eventTitleInput.value = '';
+    const today = new Date();
+    eventDateInput.value = prefillIso || isoDate(today.getFullYear(), today.getMonth(), today.getDate());
+    const h = typeof prefillHour === 'number' ? prefillHour : 9;
+    eventStartInput.value = pad2(h) + ':00';
+    eventEndInput.value = pad2(Math.min(23, h + 1)) + ':00';
+    eventDeleteBtn.style.display = 'none';
   }
+  eventModalOverlay.classList.add('open');
+  eventTitleInput.focus();
+}
+
+function closeEventModal() {
+  eventModalOverlay.classList.remove('open');
+}
+
+eventForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const id = eventIdInput.value;
+  const payload = {
+    title: eventTitleInput.value.trim(),
+    date: eventDateInput.value,
+    startTime: eventStartInput.value,
+    endTime: eventEndInput.value
+  };
+  if (!payload.title || !payload.date || !payload.startTime || !payload.endTime) return;
+  if (id) {
+    const ev = events.find(x => x.id === id);
+    if (ev) Object.assign(ev, payload);
+  } else {
+    events.push({ id: uid(), ...payload });
+  }
+  saveLinks(links);
+  closeEventModal();
+  renderAgendaAll();
 });
-document.getElementById('agenda-prev-month').addEventListener('click', () => {
+eventCancelBtn.addEventListener('click', closeEventModal);
+eventModalOverlay.addEventListener('click', (e) => {
+  if (e.target === eventModalOverlay) closeEventModal();
+});
+eventDeleteBtn.addEventListener('click', () => {
+  const id = eventIdInput.value;
+  if (id) {
+    events = events.filter(x => x.id !== id);
+    saveLinks(links);
+  }
+  closeEventModal();
+  renderAgendaAll();
+});
+
+function goToWeek(weekStart) {
+  agendaWeekStart = weekStart;
+  agendaViewYear = agendaWeekStart.getFullYear();
+  agendaViewMonth = agendaWeekStart.getMonth();
+  renderAgendaAll();
+}
+
+agendaTodayBtn.addEventListener('click', () => goToWeek(mondayOf(new Date())));
+agendaWeekPrevBtn.addEventListener('click', () => {
+  const d = new Date(agendaWeekStart);
+  d.setDate(d.getDate() - 7);
+  goToWeek(d);
+});
+agendaWeekNextBtn.addEventListener('click', () => {
+  const d = new Date(agendaWeekStart);
+  d.setDate(d.getDate() + 7);
+  goToWeek(d);
+});
+agendaNewEventBtn.addEventListener('click', () => openEventModal(null));
+document.getElementById('agenda-mini-prev-month').addEventListener('click', () => {
   agendaViewMonth--;
   if (agendaViewMonth < 0) { agendaViewMonth = 11; agendaViewYear--; }
-  renderAgendaCalendar();
+  renderMiniCal();
 });
-document.getElementById('agenda-next-month').addEventListener('click', () => {
+document.getElementById('agenda-mini-next-month').addEventListener('click', () => {
   agendaViewMonth++;
   if (agendaViewMonth > 11) { agendaViewMonth = 0; agendaViewYear++; }
-  renderAgendaCalendar();
+  renderMiniCal();
 });
-
-(function() {
-  const today = new Date();
-  agendaNewDate.value = isoDate(today.getFullYear(), today.getMonth(), today.getDate());
-})();
 
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
@@ -1733,11 +1963,11 @@ function render() {
 
   const agendaBtn = document.createElement('button');
   agendaBtn.type = 'button';
-  agendaBtn.className = 'sidebar-item sidebar-item-agenda' + (agendaActive ? ' active' : '');
+  agendaBtn.className = 'sidebar-item sidebar-item-agenda';
   const agendaLabel = document.createElement('span');
   agendaLabel.textContent = '🗓️ Agenda';
   agendaBtn.appendChild(agendaLabel);
-  agendaBtn.addEventListener('click', () => setAgendaActive(!agendaActive));
+  agendaBtn.addEventListener('click', openAgendaScreen);
   sidebar.appendChild(agendaBtn);
 
   const sessionsBtn = document.createElement('button');
@@ -2213,7 +2443,7 @@ onAuthStateChanged(auth, (user) => {
       if (!hadPlan) saveLinks(links);
 
       renderSessions();
-      renderAgenda();
+      renderAgendaAll();
       render();
     }, (err) => {
       alert('Erreur de synchronisation : ' + err.message);
@@ -2238,8 +2468,7 @@ onAuthStateChanged(auth, (user) => {
     timerPauseBtn.disabled = true;
     timerStopBtn.disabled = true;
     events = [];
-    agendaActive = false;
-    agendaPanel.classList.remove('open');
+    agendaScreen.style.display = 'none';
     authMode = 'login';
     updateAuthUI();
     authForm.reset();
