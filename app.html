@@ -595,6 +595,112 @@
   }
   .session-play-btn:hover, .session-del-btn:hover { background: var(--border); color: var(--text); }
 
+  .agenda-panel { top: 440px; right: 24px; width: min(320px, calc(100vw - 32px)); }
+  .agenda-body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: auto;
+    flex: 1;
+  }
+  .agenda-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .agenda-cal-header span { font-size: 13px; font-weight: 600; }
+  .agenda-cal-header button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .agenda-cal-header button:hover { background: var(--border); color: var(--text); }
+  .agenda-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+  .agenda-cal-daylabel {
+    font-size: 10px;
+    text-align: center;
+    color: var(--text-dim);
+    font-weight: 600;
+    padding: 2px 0;
+  }
+  .agenda-cal-cell {
+    position: relative;
+    text-align: center;
+    font-size: 12px;
+    padding: 5px 0;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .agenda-cal-cell:hover { background: var(--bg-card-hover); }
+  .agenda-cal-cell.empty { cursor: default; visibility: hidden; }
+  .agenda-cal-cell.today { background: var(--accent); color: #fff; font-weight: 700; }
+  .agenda-cal-cell.has-event::after {
+    content: '';
+    position: absolute;
+    bottom: 1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .agenda-cal-cell.today.has-event::after { background: #fff; }
+  .agenda-divider { height: 1px; background: var(--border); }
+  .agenda-add-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .agenda-add-row input[type="date"] { flex-shrink: 0; width: 130px; }
+  .agenda-add-row input[type="text"] { flex: 1; min-width: 100px; }
+  .agenda-list { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .agenda-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    border-radius: 6px;
+  }
+  .agenda-row:hover { background: var(--bg-card-hover); }
+  .agenda-row.done .agenda-row-name { text-decoration: line-through; color: var(--text-dim); }
+  .agenda-row-date {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    width: 44px;
+    flex-shrink: 0;
+  }
+  .agenda-row-name {
+    flex: 1;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .agenda-del-btn {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .agenda-del-btn:hover { background: var(--border); color: var(--text); }
+
   #dashboard-screen { display: none; }
 
   .auth-screen {
@@ -813,6 +919,32 @@
             </div>
           </div>
 
+          <div class="floating-panel agenda-panel" id="agenda-panel">
+            <div class="floating-panel-header" id="agenda-panel-header">
+              <h2>🗓️ Agenda</h2>
+              <div class="floating-panel-header-right">
+                <button type="button" class="floating-close-btn" id="agenda-close-btn" title="Fermer" aria-label="Fermer">×</button>
+              </div>
+            </div>
+            <div class="agenda-body">
+              <div class="agenda-calendar">
+                <div class="agenda-cal-header">
+                  <button type="button" id="agenda-prev-month" title="Mois précédent">‹</button>
+                  <span id="agenda-month-label">—</span>
+                  <button type="button" id="agenda-next-month" title="Mois suivant">›</button>
+                </div>
+                <div class="agenda-cal-grid" id="agenda-cal-grid"></div>
+              </div>
+              <div class="agenda-divider"></div>
+              <div class="agenda-add-row">
+                <input type="date" id="agenda-new-date">
+                <input type="text" id="agenda-new-title" placeholder="Nouvel événement...">
+                <button type="button" class="btn-ghost" id="agenda-add-btn">+</button>
+              </div>
+              <div class="agenda-list" id="agenda-list"></div>
+            </div>
+          </div>
+
           <div id="content"></div>
 
           <div class="footer-actions">
@@ -977,13 +1109,17 @@ let sessionsActive = false;
 let activeSessionId = null;
 let timerStartTs = null;
 let timerInterval = null;
+let events = [];
+let agendaActive = false;
+let agendaViewYear = new Date().getFullYear();
+let agendaViewMonth = new Date().getMonth();
 let searchTerm = '';
 let draggedId = null;
 let draggedCategory = null;
 
 function saveLinks(linksToSave) {
   if (!currentUser) return;
-  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notes, sessions, plan: currentPlan }).catch(err => {
+  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notes, sessions, events, plan: currentPlan }).catch(err => {
     alert('Erreur de sauvegarde : ' + err.message);
   });
 }
@@ -1162,6 +1298,15 @@ const timerDisplay = document.getElementById('timer-display');
 const timerTaskName = document.getElementById('timer-task-name');
 const timerPauseBtn = document.getElementById('timer-pause-btn');
 const timerStopBtn = document.getElementById('timer-stop-btn');
+const agendaPanel = document.getElementById('agenda-panel');
+const agendaPanelHeader = document.getElementById('agenda-panel-header');
+const agendaCloseBtn = document.getElementById('agenda-close-btn');
+const agendaMonthLabel = document.getElementById('agenda-month-label');
+const agendaCalGrid = document.getElementById('agenda-cal-grid');
+const agendaList = document.getElementById('agenda-list');
+const agendaNewDate = document.getElementById('agenda-new-date');
+const agendaNewTitle = document.getElementById('agenda-new-title');
+const agendaAddBtn = document.getElementById('agenda-add-btn');
 const searchInput = document.getElementById('search');
 
 function setNotesActive(active) {
@@ -1177,6 +1322,13 @@ function setSessionsActive(active) {
   sessionsPanel.classList.toggle('open', active);
   const sessionsBtn = sidebar.querySelector('.sidebar-item-sessions');
   if (sessionsBtn) sessionsBtn.classList.toggle('active', active);
+}
+
+function setAgendaActive(active) {
+  agendaActive = active;
+  agendaPanel.classList.toggle('open', active);
+  const agendaBtn = sidebar.querySelector('.sidebar-item-agenda');
+  if (agendaBtn) agendaBtn.classList.toggle('active', active);
 }
 
 function makeFloatingPanel(panel, header, closeBtn, onClose, storageKey) {
@@ -1230,6 +1382,7 @@ function makeFloatingPanel(panel, header, closeBtn, onClose, storageKey) {
 
 makeFloatingPanel(notesPanel, notesPanelHeader, notesCloseBtn, () => setNotesActive(false), 'notes');
 makeFloatingPanel(sessionsPanel, sessionsPanelHeader, sessionsCloseBtn, () => setSessionsActive(false), 'sessions');
+makeFloatingPanel(agendaPanel, agendaPanelHeader, agendaCloseBtn, () => setAgendaActive(false), 'agenda');
 
 notesTextarea.addEventListener('input', () => {
   notes = notesTextarea.value;
@@ -1388,6 +1541,143 @@ window.addEventListener('beforeunload', () => {
   }
 });
 
+const AGENDA_MONTH_NAMES = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+const AGENDA_DAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+function pad2(n) { return String(n).padStart(2, '0'); }
+function isoDate(y, m, d) { return `${y}-${pad2(m + 1)}-${pad2(d)}`; }
+
+function formatEventDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
+
+function renderAgendaCalendar() {
+  agendaMonthLabel.textContent = AGENDA_MONTH_NAMES[agendaViewMonth] + ' ' + agendaViewYear;
+  agendaCalGrid.innerHTML = '';
+
+  AGENDA_DAY_LABELS.forEach(l => {
+    const label = document.createElement('div');
+    label.className = 'agenda-cal-daylabel';
+    label.textContent = l;
+    agendaCalGrid.appendChild(label);
+  });
+
+  const firstDay = new Date(agendaViewYear, agendaViewMonth, 1);
+  let startOffset = firstDay.getDay() - 1;
+  if (startOffset < 0) startOffset = 6;
+  const daysInMonth = new Date(agendaViewYear, agendaViewMonth + 1, 0).getDate();
+  const today = new Date();
+  const todayIso = isoDate(today.getFullYear(), today.getMonth(), today.getDate());
+
+  for (let i = 0; i < startOffset; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'agenda-cal-cell empty';
+    agendaCalGrid.appendChild(empty);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = isoDate(agendaViewYear, agendaViewMonth, d);
+    const cell = document.createElement('div');
+    cell.className = 'agenda-cal-cell';
+    if (iso === todayIso) cell.classList.add('today');
+    if (events.some(e => e.date === iso)) cell.classList.add('has-event');
+    cell.textContent = d;
+    cell.addEventListener('click', () => {
+      agendaNewDate.value = iso;
+      agendaNewTitle.focus();
+    });
+    agendaCalGrid.appendChild(cell);
+  }
+}
+
+function renderAgendaList() {
+  agendaList.innerHTML = '';
+  const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
+  sorted.forEach(ev => {
+    const row = document.createElement('div');
+    row.className = 'agenda-row' + (ev.done ? ' done' : '');
+
+    const check = document.createElement('input');
+    check.type = 'checkbox';
+    check.checked = ev.done;
+    check.addEventListener('change', () => toggleEventDone(ev.id));
+    row.appendChild(check);
+
+    const dateEl = document.createElement('span');
+    dateEl.className = 'agenda-row-date';
+    dateEl.textContent = formatEventDate(ev.date);
+    row.appendChild(dateEl);
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'agenda-row-name';
+    nameEl.textContent = ev.title;
+    row.appendChild(nameEl);
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'agenda-del-btn';
+    delBtn.textContent = '×';
+    delBtn.title = 'Supprimer';
+    delBtn.addEventListener('click', () => deleteEvent(ev.id));
+    row.appendChild(delBtn);
+
+    agendaList.appendChild(row);
+  });
+}
+
+function renderAgenda() {
+  renderAgendaCalendar();
+  renderAgendaList();
+}
+
+function addEvent(dateStr, title) {
+  title = title.trim();
+  if (!title || !dateStr) return;
+  events.push({ id: uid(), date: dateStr, title, done: false });
+  saveLinks(links);
+  renderAgenda();
+}
+
+function toggleEventDone(id) {
+  const ev = events.find(e => e.id === id);
+  if (!ev) return;
+  ev.done = !ev.done;
+  saveLinks(links);
+  renderAgendaList();
+}
+
+function deleteEvent(id) {
+  events = events.filter(e => e.id !== id);
+  saveLinks(links);
+  renderAgenda();
+}
+
+agendaAddBtn.addEventListener('click', () => {
+  addEvent(agendaNewDate.value, agendaNewTitle.value);
+  agendaNewTitle.value = '';
+});
+agendaNewTitle.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    addEvent(agendaNewDate.value, agendaNewTitle.value);
+    agendaNewTitle.value = '';
+  }
+});
+document.getElementById('agenda-prev-month').addEventListener('click', () => {
+  agendaViewMonth--;
+  if (agendaViewMonth < 0) { agendaViewMonth = 11; agendaViewYear--; }
+  renderAgendaCalendar();
+});
+document.getElementById('agenda-next-month').addEventListener('click', () => {
+  agendaViewMonth++;
+  if (agendaViewMonth > 11) { agendaViewMonth = 0; agendaViewYear++; }
+  renderAgendaCalendar();
+});
+
+(function() {
+  const today = new Date();
+  agendaNewDate.value = isoDate(today.getFullYear(), today.getMonth(), today.getDate());
+})();
+
 const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const form = document.getElementById('link-form');
@@ -1440,6 +1730,15 @@ function render() {
   notesBtn.appendChild(notesLabel);
   notesBtn.addEventListener('click', () => setNotesActive(!notesActive));
   sidebar.appendChild(notesBtn);
+
+  const agendaBtn = document.createElement('button');
+  agendaBtn.type = 'button';
+  agendaBtn.className = 'sidebar-item sidebar-item-agenda' + (agendaActive ? ' active' : '');
+  const agendaLabel = document.createElement('span');
+  agendaLabel.textContent = '🗓️ Agenda';
+  agendaBtn.appendChild(agendaLabel);
+  agendaBtn.addEventListener('click', () => setAgendaActive(!agendaActive));
+  sidebar.appendChild(agendaBtn);
 
   const sessionsBtn = document.createElement('button');
   sessionsBtn.type = 'button';
@@ -1906,6 +2205,7 @@ onAuthStateChanged(auth, (user) => {
       notes = data.notes || '';
       if (document.activeElement !== notesTextarea) notesTextarea.value = notes;
       sessions = data.sessions || [];
+      events = data.events || [];
 
       const hadPlan = !!data.plan;
       currentPlan = data.plan || (ADMIN_EMAILS.includes(user.email) ? 'admin' : 'free');
@@ -1913,6 +2213,7 @@ onAuthStateChanged(auth, (user) => {
       if (!hadPlan) saveLinks(links);
 
       renderSessions();
+      renderAgenda();
       render();
     }, (err) => {
       alert('Erreur de synchronisation : ' + err.message);
@@ -1936,6 +2237,9 @@ onAuthStateChanged(auth, (user) => {
     timerTaskName.textContent = 'Aucune tâche active';
     timerPauseBtn.disabled = true;
     timerStopBtn.disabled = true;
+    events = [];
+    agendaActive = false;
+    agendaPanel.classList.remove('open');
     authMode = 'login';
     updateAuthUI();
     authForm.reset();
