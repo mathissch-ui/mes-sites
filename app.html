@@ -380,6 +380,66 @@
   }
   .card-actions button:hover { background: rgba(0,0,0,0.7); }
 
+  .card-select-mode { cursor: pointer; }
+  .card-select-check {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+  }
+  .card-select-check input {
+    width: 17px;
+    height: 17px;
+    cursor: pointer;
+  }
+  .card.card-selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .card-dead-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--danger);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card.card-dead img { opacity: 0.4; }
+  .card.card-dead .card-name { color: var(--text-dim); }
+
+  .bulk-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 10px 14px 10px 20px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    z-index: 80;
+  }
+  .bulk-bar.open { display: flex; }
+  .bulk-bar-count { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .bulk-bar select {
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .bulk-bar button { font-size: 13px; padding: 8px 14px; }
+
   .empty-state {
     text-align: center;
     color: var(--text-dim);
@@ -1218,6 +1278,8 @@
               <button type="button" class="account-dropdown-item" data-sort="desc">Z → A</button>
             </div>
           </div>
+          <button type="button" class="btn-ghost" id="select-mode-btn">Sélectionner</button>
+          <button type="button" class="btn-ghost" id="check-links-btn" title="Vérifier les liens injoignables">🔍 Vérifier les liens</button>
           <button class="btn-primary" id="add-btn">+ Ajouter un lien</button>
           <div class="account-menu">
             <button class="account-btn" id="account-btn" title="Compte"><span id="account-avatar"></span></button>
@@ -1312,6 +1374,15 @@
             <input type="file" id="import-file" accept="application/json" style="display:none">
           </div>
         </div>
+      </div>
+
+      <div class="bulk-bar" id="bulk-bar">
+        <span class="bulk-bar-count" id="bulk-bar-count">0 sélectionné</span>
+        <select id="bulk-move-select">
+          <option value="">Déplacer vers...</option>
+        </select>
+        <button type="button" class="btn-ghost" id="bulk-cancel-btn">Annuler</button>
+        <button type="button" class="btn-primary" id="bulk-delete-btn" style="background: var(--danger);">Supprimer</button>
       </div>
     </div>
   </div>
@@ -1602,6 +1673,9 @@ let agendaWeekStart = mondayOf(new Date());
 let searchTerm = '';
 let draggedId = null;
 let draggedCategory = null;
+let selectMode = false;
+let selectedIds = new Set();
+let deadLinkIds = new Set();
 
 function saveLinks(linksToSave) {
   if (!currentUser) return;
@@ -1679,7 +1753,29 @@ function createCard(link, opts) {
   card.target = '_blank';
   card.rel = 'noopener noreferrer';
 
-  if (opts.draggable) {
+  if (deadLinkIds.has(link.id)) {
+    card.classList.add('card-dead');
+  }
+
+  if (selectMode) {
+    card.classList.add('card-select-mode');
+    if (selectedIds.has(link.id)) card.classList.add('card-selected');
+    card.addEventListener('click', (e) => {
+      e.preventDefault();
+      toggleSelected(link.id);
+    });
+    const checkWrap = document.createElement('div');
+    checkWrap.className = 'card-select-check';
+    const check = document.createElement('input');
+    check.type = 'checkbox';
+    check.checked = selectedIds.has(link.id);
+    check.addEventListener('click', (e) => e.stopPropagation());
+    check.addEventListener('change', () => toggleSelected(link.id));
+    checkWrap.appendChild(check);
+    card.appendChild(checkWrap);
+  }
+
+  if (opts.draggable && !selectMode) {
     card.draggable = true;
     card.addEventListener('dragstart', () => {
       draggedId = link.id;
@@ -1703,10 +1799,20 @@ function createCard(link, opts) {
   img.alt = '';
   card.appendChild(img);
 
+  if (deadLinkIds.has(link.id)) {
+    const deadBadge = document.createElement('span');
+    deadBadge.className = 'card-dead-badge';
+    deadBadge.textContent = '✕';
+    deadBadge.title = 'Ce lien semble injoignable';
+    card.appendChild(deadBadge);
+  }
+
   const name = document.createElement('div');
   name.className = 'card-name';
   name.textContent = link.name;
   card.appendChild(name);
+
+  if (selectMode) return card;
 
   const actions = document.createElement('div');
   actions.className = 'card-actions';
@@ -2725,6 +2831,95 @@ function getCategories() {
   return Array.from(set);
 }
 
+const bulkBar = document.getElementById('bulk-bar');
+const bulkBarCount = document.getElementById('bulk-bar-count');
+const bulkMoveSelect = document.getElementById('bulk-move-select');
+const selectModeBtn = document.getElementById('select-mode-btn');
+
+function updateBulkBar() {
+  const count = selectedIds.size;
+  bulkBar.classList.toggle('open', selectMode && count > 0);
+  bulkBarCount.textContent = count + ' sélectionné' + (count > 1 ? 's' : '');
+  bulkMoveSelect.innerHTML = '<option value="">Déplacer vers...</option>';
+  getCategories().forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    bulkMoveSelect.appendChild(opt);
+  });
+}
+
+function toggleSelected(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  render();
+}
+
+function exitSelectMode() {
+  selectMode = false;
+  selectedIds.clear();
+  selectModeBtn.textContent = 'Sélectionner';
+  updateBulkBar();
+  render();
+}
+
+selectModeBtn.addEventListener('click', () => {
+  selectMode = !selectMode;
+  selectedIds.clear();
+  selectModeBtn.textContent = selectMode ? 'Annuler la sélection' : 'Sélectionner';
+  updateBulkBar();
+  render();
+});
+
+document.getElementById('bulk-cancel-btn').addEventListener('click', exitSelectMode);
+
+bulkMoveSelect.addEventListener('change', () => {
+  const cat = bulkMoveSelect.value;
+  if (!cat) return;
+  links.forEach(l => {
+    if (selectedIds.has(l.id)) l.category = cat;
+  });
+  saveLinks(links);
+  exitSelectMode();
+});
+
+document.getElementById('bulk-delete-btn').addEventListener('click', () => {
+  openBulkDeleteConfirm(selectedIds.size);
+});
+
+async function checkDeadLinks() {
+  const btn = document.getElementById('check-links-btn');
+  if (btn.disabled || links.length === 0) return;
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'Vérification...';
+  deadLinkIds.clear();
+
+  const queue = links.slice();
+  async function worker() {
+    while (queue.length) {
+      const link = queue.shift();
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        await fetch(link.url, { mode: 'no-cors', signal: controller.signal });
+        clearTimeout(timeoutId);
+      } catch (e) {
+        deadLinkIds.add(link.id);
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: 5 }, worker));
+
+  btn.disabled = false;
+  btn.textContent = originalText;
+  render();
+  const deadCount = deadLinkIds.size;
+  const note = "Note : seuls les domaines totalement injoignables sont détectés (pas les pages \"page introuvable\").";
+  alert((deadCount > 0 ? deadCount + ' lien(s) semblent injoignables (croix rouge sur la carte).' : 'Tous les liens semblent joignables.') + ' ' + note);
+}
+document.getElementById('check-links-btn').addEventListener('click', checkDeadLinks);
+
 function sortCategories(direction) {
   const sorted = getCategories().sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
   categoryOrder = direction === 'desc' ? sorted.reverse() : sorted;
@@ -2753,6 +2948,7 @@ document.addEventListener('click', (e) => {
 function render() {
   content.innerHTML = '';
   sidebar.innerHTML = '';
+  updateBulkBar();
 
   const notesBtn = document.createElement('button');
   notesBtn.type = 'button';
@@ -3000,15 +3196,25 @@ function closeModal() {
 const confirmOverlay = document.getElementById('confirm-overlay');
 const confirmMessage = document.getElementById('confirm-message');
 let pendingDeleteId = null;
+let pendingBulkDelete = false;
 
 function openConfirm(link) {
   pendingDeleteId = link.id;
+  pendingBulkDelete = false;
   confirmMessage.textContent = `Supprimer "${link.name}" ?`;
+  confirmOverlay.classList.add('open');
+}
+
+function openBulkDeleteConfirm(count) {
+  pendingDeleteId = null;
+  pendingBulkDelete = true;
+  confirmMessage.textContent = `Supprimer ${count} lien${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''} ?`;
   confirmOverlay.classList.add('open');
 }
 
 function closeConfirm() {
   pendingDeleteId = null;
+  pendingBulkDelete = false;
   confirmOverlay.classList.remove('open');
 }
 
@@ -3048,7 +3254,13 @@ renameCategoryOverlay.addEventListener('click', (e) => {
 
 document.getElementById('confirm-cancel-btn').addEventListener('click', closeConfirm);
 document.getElementById('confirm-delete-btn').addEventListener('click', () => {
-  if (pendingDeleteId) {
+  if (pendingBulkDelete) {
+    links = links.filter(l => !selectedIds.has(l.id));
+    saveLinks(links);
+    selectMode = false;
+    selectedIds.clear();
+    selectModeBtn.textContent = 'Sélectionner';
+  } else if (pendingDeleteId) {
     links = links.filter(l => l.id !== pendingDeleteId);
     saveLinks(links);
   }
