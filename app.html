@@ -411,6 +411,60 @@
   }
   #cat-input-wrap { display: none; }
 
+  .event-modal {
+    max-width: 380px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .event-modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  }
+  .event-modal-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+  .event-modal h2 { font-size: 17px; margin-bottom: 20px; }
+  .event-modal .field input[type="text"],
+  .event-modal .field input[type="date"] {
+    font-size: 15px;
+    padding: 11px 14px;
+    border-radius: 10px;
+  }
+  .event-time-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .event-time-row .field { flex: 1; margin-bottom: 0; }
+  .event-time-row input[type="time"] {
+    width: 100%;
+    font-size: 15px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .event-time-arrow {
+    color: var(--text-dim);
+    font-size: 16px;
+    padding-bottom: 11px;
+  }
+
   .footer-actions {
     display: flex;
     justify-content: center;
@@ -756,8 +810,52 @@
   }
   .agenda-event-block b { display: block; font-size: 12px; font-weight: 600; }
   .agenda-event-block:hover { filter: brightness(1.1); }
+  @keyframes agenda-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(91, 140, 255, 0.7); }
+    50% { box-shadow: 0 0 0 7px rgba(91, 140, 255, 0); }
+  }
+  .agenda-event-block.pulse { animation: agenda-pulse 0.8s ease-in-out 2; }
+
+  .agenda-search-wrap { position: relative; }
+  .agenda-search-wrap input { width: 200px; }
+  .agenda-search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    width: 270px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    display: none;
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 60;
+  }
+  .agenda-search-results.open { display: block; }
+  .agenda-search-result {
+    padding: 9px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .agenda-search-result:hover { background: var(--bg-card-hover); }
+  .agenda-search-result-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .agenda-search-result-date { color: var(--text-dim); font-size: 11px; white-space: nowrap; flex-shrink: 0; }
+  .agenda-search-empty { padding: 12px; font-size: 12px; color: var(--text-dim); text-align: center; }
+
   @media (max-width: 900px) {
     .agenda-mini-cal { display: none; }
+  }
+  @media (max-width: 700px) {
+    .agenda-search-wrap input { width: 140px; }
   }
 
   #dashboard-screen { display: none; }
@@ -1004,6 +1102,10 @@
           <span class="agenda-week-label" id="agenda-week-label">—</span>
         </div>
         <div class="agenda-page-header-right">
+          <div class="agenda-search-wrap">
+            <input type="text" id="agenda-search-input" placeholder="Rechercher un événement...">
+            <div class="agenda-search-results" id="agenda-search-results"></div>
+          </div>
           <button type="button" class="btn-primary" id="agenda-new-event-btn">+ Événement</button>
         </div>
       </div>
@@ -1027,7 +1129,8 @@
   </div>
 
   <div class="modal-overlay" id="event-modal-overlay">
-    <div class="modal">
+    <div class="modal event-modal">
+      <div class="event-modal-icon">🗓️</div>
       <h2 id="event-modal-title">Nouvel événement</h2>
       <form id="event-form">
         <input type="hidden" id="event-id">
@@ -1039,12 +1142,13 @@
           <label for="event-date">Date</label>
           <input type="date" id="event-date" required>
         </div>
-        <div style="display:flex; gap:10px;">
-          <div class="field" style="flex:1;">
+        <div class="event-time-row">
+          <div class="field">
             <label for="event-start">Début</label>
             <input type="time" id="event-start" required>
           </div>
-          <div class="field" style="flex:1;">
+          <span class="event-time-arrow">→</span>
+          <div class="field">
             <label for="event-end">Fin</label>
             <input type="time" id="event-end" required>
           </div>
@@ -1423,6 +1527,8 @@ const eventStartInput = document.getElementById('event-start');
 const eventEndInput = document.getElementById('event-end');
 const eventDeleteBtn = document.getElementById('event-delete-btn');
 const eventCancelBtn = document.getElementById('event-cancel-btn');
+const agendaSearchInput = document.getElementById('agenda-search-input');
+const agendaSearchResults = document.getElementById('agenda-search-results');
 
 function setNotesActive(active) {
   notesActive = active;
@@ -1789,6 +1895,7 @@ function renderAgendaWeek() {
       const endMin = Math.max(startMin + 15, eh * 60 + em);
       const block = document.createElement('div');
       block.className = 'agenda-event-block';
+      block.dataset.eventId = ev.id;
       block.style.top = (startMin / 60 * AGENDA_HOUR_HEIGHT) + 'px';
       block.style.height = ((endMin - startMin) / 60 * AGENDA_HOUR_HEIGHT - 2) + 'px';
       block.innerHTML = '<b>' + escapeHtml(ev.title) + '</b>' + (ev.startTime || '') + (ev.endTime ? '–' + ev.endTime : '');
@@ -1906,6 +2013,66 @@ document.getElementById('agenda-mini-next-month').addEventListener('click', () =
   agendaViewMonth++;
   if (agendaViewMonth > 11) { agendaViewMonth = 0; agendaViewYear++; }
   renderMiniCal();
+});
+
+function jumpToEvent(ev) {
+  const d = new Date(ev.date + 'T00:00:00');
+  goToWeek(mondayOf(d));
+  agendaSearchResults.classList.remove('open');
+  agendaSearchInput.value = '';
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      const target = agendaWeekGridEl.querySelector('.agenda-event-block[data-event-id="' + ev.id + '"]');
+      if (target) {
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        target.classList.add('pulse');
+        setTimeout(() => target.classList.remove('pulse'), 1800);
+      }
+    }, 50);
+  });
+}
+
+agendaSearchInput.addEventListener('input', () => {
+  const term = agendaSearchInput.value.trim().toLowerCase();
+  agendaSearchResults.innerHTML = '';
+  if (!term) {
+    agendaSearchResults.classList.remove('open');
+    return;
+  }
+  const matches = events
+    .filter(e => e.title.toLowerCase().includes(term))
+    .sort((a, b) => (a.date + (a.startTime || '')).localeCompare(b.date + (b.startTime || '')))
+    .slice(0, 8);
+
+  if (matches.length === 0) {
+    agendaSearchResults.innerHTML = '<div class="agenda-search-empty">Aucun événement trouvé</div>';
+  } else {
+    matches.forEach(ev => {
+      const row = document.createElement('div');
+      row.className = 'agenda-search-result';
+
+      const name = document.createElement('span');
+      name.className = 'agenda-search-result-name';
+      name.textContent = ev.title;
+      row.appendChild(name);
+
+      const dateEl = document.createElement('span');
+      dateEl.className = 'agenda-search-result-date';
+      const d = new Date(ev.date + 'T00:00:00');
+      dateEl.textContent = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + (ev.startTime ? ' · ' + ev.startTime : '');
+      row.appendChild(dateEl);
+
+      row.addEventListener('click', () => jumpToEvent(ev));
+      agendaSearchResults.appendChild(row);
+    });
+  }
+  agendaSearchResults.classList.add('open');
+});
+
+document.addEventListener('click', (e) => {
+  if (!agendaSearchResults.contains(e.target) && e.target !== agendaSearchInput) {
+    agendaSearchResults.classList.remove('open');
+  }
 });
 
 const modalOverlay = document.getElementById('modal-overlay');
