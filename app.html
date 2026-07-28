@@ -690,54 +690,108 @@
   }
   .session-play-btn:hover, .session-del-btn:hover { background: var(--border); color: var(--text); }
 
-  .sessions-view-toggle {
+  /* Page Stats (vue pleine page) */
+  #stats-screen { display: none; min-height: 100vh; }
+  .stats-page { padding: 32px 24px 60px; max-width: 1100px; }
+  .stats-page-header {
     display: flex;
-    gap: 4px;
-    padding: 10px 14px 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
   }
-  .sessions-view-btn {
-    flex: 1;
+  .stats-page-header-left { display: flex; align-items: center; gap: 12px; }
+  .stats-page-header-left h1 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+  .stats-page-header-center { display: flex; align-items: center; gap: 6px; }
+  .stats-period-btn {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 7px 16px;
+    font-size: 13px;
+  }
+  .stats-period-btn.active { background: var(--bg-card-hover); color: var(--text); border-color: var(--text-dim); }
+  .stats-summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .stats-summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .stats-summary-value {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .stats-summary-label { font-size: 12px; color: var(--text-dim); }
+  .stats-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .stats-card h2 { font-size: 15px; font-weight: 600; margin: 0 0 16px; }
+  .stats-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .stats-card-header h2 { margin: 0; }
+  .stats-chart-toggle { display: flex; gap: 4px; }
+  .stats-chart-toggle button {
     background: transparent;
     color: var(--text-dim);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 7px 10px;
+    padding: 6px 14px;
     font-size: 12px;
   }
-  .sessions-view-btn.active { background: var(--bg-card-hover); color: var(--text); border-color: var(--text-dim); }
-  .session-stats-summary {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-    text-align: center;
-  }
-  .session-stats-chart {
+  .stats-chart-toggle button.active { background: var(--bg-card-hover); color: var(--text); border-color: var(--text-dim); }
+  .stats-daily-chart {
     display: flex;
     align-items: flex-end;
-    gap: 8px;
-    height: 140px;
-    padding: 8px 4px 0;
+    gap: 6px;
+    height: 180px;
   }
-  .session-stats-col {
-    flex: 1;
+  .stats-daily-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .stats-daily-bar { width: 55%; min-height: 2px; background: var(--accent); border-radius: 4px 4px 0 0; transition: height 0.2s; }
+  .stats-daily-label { font-size: 10px; color: var(--text-dim); margin-top: 8px; }
+  .stats-empty { color: var(--text-dim); font-size: 13px; text-align: center; padding: 30px 0; }
+  .stats-bar-list { display: flex; flex-direction: column; gap: 14px; }
+  .stats-bar-row-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .stats-bar-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .stats-bar-name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stats-bar-pct { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+  .stats-bar-track { height: 8px; background: var(--bg-card-hover); border-radius: 100px; overflow: hidden; }
+  .stats-bar-fill { height: 100%; border-radius: 100px; transition: width 0.3s; }
+  .stats-bar-duration { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .stats-donut-wrap { display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
+  .stats-donut { width: 170px; height: 170px; border-radius: 50%; position: relative; flex-shrink: 0; }
+  .stats-donut-center {
+    position: absolute;
+    inset: 24px;
+    border-radius: 50%;
+    background: var(--bg-card);
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
-    height: 100%;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
   }
-  .session-stats-bar {
-    width: 60%;
-    min-height: 3px;
-    background: var(--accent);
-    border-radius: 4px 4px 0 0;
-    transition: height 0.2s;
-  }
-  .session-stats-label {
-    font-size: 10px;
-    color: var(--text-dim);
-    margin-top: 6px;
-  }
+  .stats-donut-center b { font-size: 15px; }
+  .stats-donut-center span { font-size: 11px; color: var(--text-dim); }
+  .stats-legend { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 180px; }
+  .stats-legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .stats-legend-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stats-legend-pct { font-size: 12px; font-weight: 600; color: var(--text-dim); }
 
   /* Mini calendrier (reutilise dans la page Agenda) */
   .agenda-cal-header {
@@ -1156,11 +1210,7 @@
                 <button type="button" class="floating-close-btn" id="sessions-close-btn" title="Fermer" aria-label="Fermer">×</button>
               </div>
             </div>
-            <div class="sessions-view-toggle">
-              <button type="button" class="sessions-view-btn active" data-view="tasks">Tâches</button>
-              <button type="button" class="sessions-view-btn" data-view="stats">📊 Stats</button>
-            </div>
-            <div class="sessions-body" id="sessions-tasks-view">
+            <div class="sessions-body">
               <div class="timer-display" id="timer-display">00:00:00</div>
               <div class="timer-task-name" id="timer-task-name">Aucune tâche active</div>
               <div class="timer-controls">
@@ -1173,10 +1223,6 @@
                 <button type="button" class="btn-ghost" id="session-add-btn">+</button>
               </div>
               <div class="sessions-list" id="sessions-list"></div>
-            </div>
-            <div class="sessions-body" id="sessions-stats-view" style="display:none;">
-              <div class="session-stats-summary" id="session-stats-summary">—</div>
-              <div class="session-stats-chart" id="session-stats-chart"></div>
             </div>
           </div>
 
@@ -1228,6 +1274,39 @@
             <div class="agenda-week-grid" id="agenda-week-grid"></div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stats-screen">
+    <div class="wrap stats-page">
+      <div class="stats-page-header">
+        <div class="stats-page-header-left">
+          <button type="button" class="btn-icon" id="stats-back-btn" title="Retour au tableau de bord">←</button>
+          <h1>📊 Statistiques</h1>
+        </div>
+        <div class="stats-page-header-center">
+          <button type="button" class="stats-period-btn active" data-period="7">7 jours</button>
+          <button type="button" class="stats-period-btn" data-period="30">30 jours</button>
+        </div>
+      </div>
+
+      <div class="stats-summary-row" id="stats-summary-row"></div>
+
+      <div class="stats-card">
+        <h2>Activité quotidienne</h2>
+        <div class="stats-daily-chart" id="stats-daily-chart"></div>
+      </div>
+
+      <div class="stats-card">
+        <div class="stats-card-header">
+          <h2>Répartition par tâche</h2>
+          <div class="stats-chart-toggle" id="stats-chart-toggle">
+            <button type="button" class="active" data-chart="bar">Barres</button>
+            <button type="button" data-chart="donut">Anneau</button>
+          </div>
+        </div>
+        <div id="stats-breakdown-body"></div>
       </div>
     </div>
   </div>
@@ -1870,13 +1949,13 @@ function startTimer(id) {
   renderSessions();
 }
 
-function logTime(seconds) {
+function logTime(seconds, taskId, taskName) {
   if (seconds <= 0) return;
   const today = new Date();
   const iso = isoDate(today.getFullYear(), today.getMonth(), today.getDate());
-  const entry = timeLog.find(t => t.date === iso);
+  const entry = timeLog.find(t => t.date === iso && t.taskId === taskId);
   if (entry) entry.seconds += seconds;
-  else timeLog.push({ date: iso, seconds });
+  else timeLog.push({ date: iso, taskId, taskName, seconds });
 }
 
 function pauseTimer() {
@@ -1884,7 +1963,7 @@ function pauseTimer() {
   const s = sessions.find(x => x.id === activeSessionId);
   const elapsed = (Date.now() - timerStartTs) / 1000;
   if (s) s.totalSeconds += elapsed;
-  logTime(elapsed);
+  logTime(elapsed, activeSessionId, s ? s.name : 'Autre');
   clearInterval(timerInterval);
   timerInterval = null;
   timerStartTs = null;
@@ -1905,54 +1984,234 @@ function stopAndFinishTimer() {
   if (s) { s.done = true; saveLinks(links); renderSessions(); }
 }
 
-function renderSessionStats() {
-  const chart = document.getElementById('session-stats-chart');
-  const summary = document.getElementById('session-stats-summary');
-  chart.innerHTML = '';
+const STATS_COLORS = ['#5b8cff', '#a78bfa', '#34d399', '#fb923c', '#f472b6', '#f87171', '#38bdf8', '#facc15'];
+let statsPeriodDays = 7;
+let statsChartType = 'bar';
 
-  const days = [];
-  for (let i = 6; i >= 0; i--) {
+function getStatsRange(days) {
+  const result = [];
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    days.push(d);
+    result.push(d);
   }
-  const dayTotals = days.map(d => {
-    const iso = isoDate(d.getFullYear(), d.getMonth(), d.getDate());
-    const entry = timeLog.find(t => t.date === iso);
-    return { date: d, seconds: entry ? entry.seconds : 0 };
+  return result;
+}
+
+function renderStatsSummary(totalSeconds, taskList) {
+  const row = document.getElementById('stats-summary-row');
+  row.innerHTML = '';
+  const cards = [
+    { label: 'Temps total', value: formatDuration(totalSeconds) },
+    { label: 'Tâches suivies', value: String(taskList.length) },
+    { label: 'Tâche la plus travaillée', value: taskList[0] ? taskList[0].name : '—' }
+  ];
+  cards.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'stats-summary-card';
+    const value = document.createElement('div');
+    value.className = 'stats-summary-value';
+    value.textContent = c.value;
+    card.appendChild(value);
+    const label = document.createElement('div');
+    label.className = 'stats-summary-label';
+    label.textContent = c.label;
+    card.appendChild(label);
+    row.appendChild(card);
   });
-  const weekTotal = dayTotals.reduce((sum, d) => sum + d.seconds, 0);
-  const maxSeconds = Math.max(...dayTotals.map(d => d.seconds), 1);
+}
 
-  summary.textContent = weekTotal > 0 ? 'Cette semaine : ' + formatDuration(weekTotal) : 'Aucune session cette semaine';
-
-  dayTotals.forEach(d => {
+function renderStatsDailyChart(dailyTotals) {
+  const chart = document.getElementById('stats-daily-chart');
+  chart.innerHTML = '';
+  const max = Math.max(...dailyTotals.map(d => d.seconds), 1);
+  dailyTotals.forEach(d => {
     const col = document.createElement('div');
-    col.className = 'session-stats-col';
+    col.className = 'stats-daily-col';
 
     const bar = document.createElement('div');
-    bar.className = 'session-stats-bar';
-    bar.style.height = (d.seconds > 0 ? Math.max(6, (d.seconds / maxSeconds) * 100) : 0) + '%';
+    bar.className = 'stats-daily-bar';
+    bar.style.height = (d.seconds > 0 ? Math.max(4, (d.seconds / max) * 100) : 0) + '%';
     bar.title = formatDuration(d.seconds);
     col.appendChild(bar);
 
     const label = document.createElement('div');
-    label.className = 'session-stats-label';
-    label.textContent = AGENDA_DOW_SHORT[d.date.getDay()].slice(0, 2);
+    label.className = 'stats-daily-label';
+    label.textContent = statsPeriodDays <= 7 ? AGENDA_DOW_SHORT[d.date.getDay()].slice(0, 2) : String(d.date.getDate());
     col.appendChild(label);
 
     chart.appendChild(col);
   });
 }
 
-document.querySelectorAll('.sessions-view-btn').forEach(btn => {
+function renderStatsBreakdownBars(taskList, total) {
+  const body = document.getElementById('stats-breakdown-body');
+  body.innerHTML = '';
+  if (taskList.length === 0) {
+    body.innerHTML = '<div class="stats-empty">Aucune donnée sur cette période.</div>';
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'stats-bar-list';
+  taskList.forEach((t, i) => {
+    const pct = total > 0 ? Math.round((t.seconds / total) * 100) : 0;
+    const color = STATS_COLORS[i % STATS_COLORS.length];
+
+    const row = document.createElement('div');
+    row.className = 'stats-bar-row';
+
+    const top = document.createElement('div');
+    top.className = 'stats-bar-row-top';
+    const dot = document.createElement('span');
+    dot.className = 'stats-bar-dot';
+    dot.style.background = color;
+    top.appendChild(dot);
+    const name = document.createElement('span');
+    name.className = 'stats-bar-name';
+    name.textContent = t.name;
+    top.appendChild(name);
+    const pctEl = document.createElement('span');
+    pctEl.className = 'stats-bar-pct';
+    pctEl.textContent = pct + '%';
+    top.appendChild(pctEl);
+    row.appendChild(top);
+
+    const track = document.createElement('div');
+    track.className = 'stats-bar-track';
+    const fill = document.createElement('div');
+    fill.className = 'stats-bar-fill';
+    fill.style.width = pct + '%';
+    fill.style.background = color;
+    track.appendChild(fill);
+    row.appendChild(track);
+
+    const duration = document.createElement('div');
+    duration.className = 'stats-bar-duration';
+    duration.textContent = formatDuration(t.seconds);
+    row.appendChild(duration);
+
+    list.appendChild(row);
+  });
+  body.appendChild(list);
+}
+
+function renderStatsBreakdownDonut(taskList, total) {
+  const body = document.getElementById('stats-breakdown-body');
+  body.innerHTML = '';
+  if (taskList.length === 0) {
+    body.innerHTML = '<div class="stats-empty">Aucune donnée sur cette période.</div>';
+    return;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'stats-donut-wrap';
+
+  let cumulative = 0;
+  const gradientParts = [];
+  taskList.forEach((t, i) => {
+    const pct = total > 0 ? (t.seconds / total) * 100 : 0;
+    const color = STATS_COLORS[i % STATS_COLORS.length];
+    const start = cumulative;
+    const end = cumulative + pct;
+    gradientParts.push(color + ' ' + start + '% ' + end + '%');
+    cumulative = end;
+  });
+  const donut = document.createElement('div');
+  donut.className = 'stats-donut';
+  donut.style.background = 'conic-gradient(' + gradientParts.join(', ') + ')';
+  const center = document.createElement('div');
+  center.className = 'stats-donut-center';
+  const centerVal = document.createElement('b');
+  centerVal.textContent = formatDuration(total);
+  center.appendChild(centerVal);
+  const centerLabel = document.createElement('span');
+  centerLabel.textContent = 'total';
+  center.appendChild(centerLabel);
+  donut.appendChild(center);
+  wrap.appendChild(donut);
+
+  const legend = document.createElement('div');
+  legend.className = 'stats-legend';
+  taskList.forEach((t, i) => {
+    const pct = total > 0 ? Math.round((t.seconds / total) * 100) : 0;
+    const color = STATS_COLORS[i % STATS_COLORS.length];
+    const item = document.createElement('div');
+    item.className = 'stats-legend-item';
+    const dot = document.createElement('span');
+    dot.className = 'stats-bar-dot';
+    dot.style.background = color;
+    item.appendChild(dot);
+    const name = document.createElement('span');
+    name.className = 'stats-legend-name';
+    name.textContent = t.name;
+    item.appendChild(name);
+    const pctEl = document.createElement('span');
+    pctEl.className = 'stats-legend-pct';
+    pctEl.textContent = pct + '%';
+    item.appendChild(pctEl);
+    legend.appendChild(item);
+  });
+  wrap.appendChild(legend);
+  body.appendChild(wrap);
+}
+
+function renderStatsBreakdown(taskList, total) {
+  if (statsChartType === 'donut') renderStatsBreakdownDonut(taskList, total);
+  else renderStatsBreakdownBars(taskList, total);
+}
+
+function renderStatsAll() {
+  const days = getStatsRange(statsPeriodDays);
+  const isoSet = new Set(days.map(d => isoDate(d.getFullYear(), d.getMonth(), d.getDate())));
+  const entriesInRange = timeLog.filter(t => isoSet.has(t.date));
+
+  const dailyTotals = days.map(d => {
+    const iso = isoDate(d.getFullYear(), d.getMonth(), d.getDate());
+    const total = entriesInRange.filter(t => t.date === iso).reduce((sum, t) => sum + t.seconds, 0);
+    return { date: d, seconds: total };
+  });
+
+  const totalSeconds = entriesInRange.reduce((sum, t) => sum + t.seconds, 0);
+
+  const byTask = {};
+  entriesInRange.forEach(t => {
+    const id = t.taskId || 'unknown';
+    if (!byTask[id]) byTask[id] = { id, seconds: 0, name: t.taskName || 'Autre' };
+    byTask[id].seconds += t.seconds;
+    const live = sessions.find(s => s.id === id);
+    if (live) byTask[id].name = live.name;
+  });
+  const taskList = Object.values(byTask).sort((a, b) => b.seconds - a.seconds);
+
+  renderStatsSummary(totalSeconds, taskList);
+  renderStatsDailyChart(dailyTotals);
+  renderStatsBreakdown(taskList, totalSeconds);
+}
+
+function openStatsScreen() {
+  dashboardScreen.style.display = 'none';
+  document.getElementById('stats-screen').style.display = 'block';
+  renderStatsAll();
+}
+function closeStatsScreen() {
+  document.getElementById('stats-screen').style.display = 'none';
+  dashboardScreen.style.display = 'block';
+}
+document.getElementById('stats-back-btn').addEventListener('click', closeStatsScreen);
+document.querySelectorAll('.stats-period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.sessions-view-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.stats-period-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const view = btn.dataset.view;
-    document.getElementById('sessions-tasks-view').style.display = view === 'tasks' ? '' : 'none';
-    document.getElementById('sessions-stats-view').style.display = view === 'stats' ? '' : 'none';
-    if (view === 'stats') renderSessionStats();
+    statsPeriodDays = parseInt(btn.dataset.period, 10);
+    renderStatsAll();
+  });
+});
+document.querySelectorAll('#stats-chart-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#stats-chart-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    statsChartType = btn.dataset.chart;
+    renderStatsAll();
   });
 });
 
@@ -1968,7 +2227,7 @@ window.addEventListener('beforeunload', () => {
     const s = sessions.find(x => x.id === activeSessionId);
     const elapsed = (Date.now() - timerStartTs) / 1000;
     if (s) s.totalSeconds += elapsed;
-    logTime(elapsed);
+    logTime(elapsed, activeSessionId, s ? s.name : 'Autre');
     saveLinks(links);
   }
 });
@@ -2367,6 +2626,25 @@ function render() {
     else setSessionsActive(!sessionsActive);
   });
   sidebar.appendChild(sessionsBtn);
+
+  const statsLocked = !isPaidPlan();
+  const statsBtn = document.createElement('button');
+  statsBtn.type = 'button';
+  statsBtn.className = 'sidebar-item sidebar-item-stats' + (statsLocked ? ' locked' : '');
+  const statsLabel = document.createElement('span');
+  statsLabel.textContent = '📊 Stats';
+  statsBtn.appendChild(statsLabel);
+  if (statsLocked) {
+    const statsBadge = document.createElement('span');
+    statsBadge.className = 'sidebar-pro-badge';
+    statsBadge.textContent = 'PRO';
+    statsBtn.appendChild(statsBadge);
+  }
+  statsBtn.addEventListener('click', () => {
+    if (statsLocked) openLockedModal('Stats');
+    else openStatsScreen();
+  });
+  sidebar.appendChild(statsBtn);
 
   const term = searchTerm.trim().toLowerCase();
   const filtered = links.filter(l => l.name.toLowerCase().includes(term) || l.url.toLowerCase().includes(term));
@@ -2861,6 +3139,7 @@ onAuthStateChanged(auth, (user) => {
     timeLog = [];
     events = [];
     agendaScreen.style.display = 'none';
+    document.getElementById('stats-screen').style.display = 'none';
     authMode = 'login';
     updateAuthUI();
     authForm.reset();
