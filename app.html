@@ -1603,7 +1603,13 @@ const googleProvider = new GoogleAuthProvider();
 // Une fois le champ "plan" présent sur leur document Firestore, cette liste n'est plus
 // consultée pour eux : pour révoquer/transférer l'admin, modifier directement le champ
 // "plan" du document (collection "links", id = uid du compte) dans la console Firebase.
-const ADMIN_EMAILS = ['mathis.schwob@gmail.com'];
+const ADMIN_EMAILS = [
+  'mathis.schwob@gmail.com',
+  'cg.patricia.m@gmail.com',
+  'smartech.reparation33@gmail.com',
+  'lobbydallas74@gmail.com',
+  'maena.girardet@gmail.com'
+];
 
 const PLAN_LABELS = { free: 'Gratuit', pro: 'Pro', unlimited: 'Illimité', admin: 'Admin' };
 
