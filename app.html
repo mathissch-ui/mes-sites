@@ -671,11 +671,31 @@
   }
   .floating-close-btn:hover { background: var(--border); color: var(--text); }
 
-  .notes-panel { top: 90px; right: 24px; width: min(340px, calc(100vw - 32px)); }
-  .notes-list-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-  .notes-list-toolbar { padding: 10px 14px; border-bottom: 1px solid var(--border); }
-  .notes-list-toolbar .btn-ghost { width: 100%; }
-  .notes-list { flex: 1; overflow-y: auto; padding: 6px; }
+  /* Page Bloc-notes (vue pleine page) */
+  #notes-screen { display: none; min-height: 100vh; }
+  .notes-page { padding: 32px 24px 60px; max-width: 1200px; }
+  .notes-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .notes-page-header-left { display: flex; align-items: center; gap: 12px; }
+  .notes-page-header-left h1 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+  .notes-page-header-right { display: flex; align-items: center; gap: 12px; }
+  .notes-page-body { display: flex; gap: 24px; align-items: flex-start; }
+  .notes-sidebar-list {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 8px;
+    max-height: 72vh;
+    overflow-y: auto;
+  }
   .notes-list-item {
     display: flex;
     align-items: center;
@@ -685,6 +705,7 @@
     cursor: pointer;
   }
   .notes-list-item:hover { background: var(--bg-card-hover); }
+  .notes-list-item.active { background: var(--bg-card-hover); border: 1px solid var(--text-dim); }
   .notes-list-item-body { flex: 1; min-width: 0; }
   .notes-list-item-title {
     font-size: 13px;
@@ -717,39 +738,62 @@
   }
   .notes-list-item-del:hover { background: var(--border); color: var(--text); }
   .notes-list-empty { padding: 24px 12px; text-align: center; font-size: 13px; color: var(--text-dim); }
-  .notes-detail-view { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-  .notes-detail-toolbar {
+  .notes-editor {
+    flex: 1;
+    min-width: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    min-height: 72vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .notes-editor-empty {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--border);
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    text-align: center;
   }
-  .notes-detail-toolbar .btn-icon { width: 28px; height: 28px; flex-shrink: 0; }
-  .notes-detail-title-input {
+  .notes-editor-fields { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  .notes-editor-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+  }
+  .notes-page-title-input {
     flex: 1;
     min-width: 0;
     background: transparent;
     border: none;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     color: var(--text);
-    padding: 6px 4px;
+    padding: 4px 0;
   }
-  .notes-detail-title-input:focus { outline: none; background: var(--bg-card-hover); border-radius: 6px; }
-  .notes-textarea {
+  .notes-page-title-input:focus { outline: none; }
+  .notes-page-textarea {
     width: 100%;
     flex: 1;
-    min-height: 120px;
     resize: none;
-    background: var(--bg-card);
+    background: transparent;
     border: none;
-    padding: 14px;
     font-family: inherit;
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.7;
     color: var(--text);
     outline: none;
+  }
+  @media (max-width: 780px) {
+    .notes-page-body { flex-direction: column; }
+    .notes-sidebar-list { width: 100%; max-height: 240px; }
   }
 
   .sessions-panel { top: 90px; right: 380px; width: min(300px, calc(100vw - 32px)); }
@@ -1319,30 +1363,6 @@
       <div class="app-body">
         <aside class="sidebar" id="sidebar"></aside>
         <div class="main-content">
-          <div class="floating-panel notes-panel" id="notes-panel">
-            <div class="floating-panel-header" id="notes-panel-header">
-              <h2>📝 Bloc-notes</h2>
-              <div class="floating-panel-header-right">
-                <span class="floating-save-status" id="notes-save-status"></span>
-                <button type="button" class="floating-close-btn" id="notes-close-btn" title="Fermer" aria-label="Fermer">×</button>
-              </div>
-            </div>
-            <div class="notes-list-view" id="notes-list-view">
-              <div class="notes-list-toolbar">
-                <button type="button" class="btn-ghost" id="notes-new-btn">+ Nouvelle note</button>
-              </div>
-              <div class="notes-list" id="notes-list"></div>
-            </div>
-            <div class="notes-detail-view" id="notes-detail-view" style="display:none;">
-              <div class="notes-detail-toolbar">
-                <button type="button" class="btn-icon" id="notes-detail-back-btn" title="Retour">←</button>
-                <input type="text" id="notes-detail-title" class="notes-detail-title-input" placeholder="Titre">
-                <button type="button" class="btn-icon" id="notes-detail-delete-btn" title="Supprimer">🗑</button>
-              </div>
-              <textarea id="notes-textarea" class="notes-textarea" placeholder="Écrivez vos notes ici..."></textarea>
-            </div>
-          </div>
-
           <div class="floating-panel sessions-panel" id="sessions-panel">
             <div class="floating-panel-header" id="sessions-panel-header">
               <h2>⏱️ Sessions de travail</h2>
@@ -1383,6 +1403,34 @@
         </select>
         <button type="button" class="btn-ghost" id="bulk-cancel-btn">Annuler</button>
         <button type="button" class="btn-primary" id="bulk-delete-btn" style="background: var(--danger);">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="notes-screen">
+    <div class="wrap notes-page">
+      <div class="notes-page-header">
+        <div class="notes-page-header-left">
+          <button type="button" class="btn-icon" id="notes-back-btn" title="Retour au tableau de bord">←</button>
+          <h1>📝 Bloc-notes</h1>
+        </div>
+        <div class="notes-page-header-right">
+          <span class="floating-save-status" id="notes-save-status"></span>
+          <button type="button" class="btn-primary" id="notes-new-btn">+ Nouvelle note</button>
+        </div>
+      </div>
+      <div class="notes-page-body">
+        <aside class="notes-sidebar-list" id="notes-list"></aside>
+        <div class="notes-editor">
+          <div class="notes-editor-empty" id="notes-editor-empty">Sélectionnez une note à gauche, ou créez-en une nouvelle.</div>
+          <div class="notes-editor-fields" id="notes-editor-fields" style="display:none;">
+            <div class="notes-editor-title-row">
+              <input type="text" id="notes-detail-title" class="notes-page-title-input" placeholder="Titre">
+              <button type="button" class="btn-icon" id="notes-detail-delete-btn" title="Supprimer">🗑</button>
+            </div>
+            <textarea id="notes-textarea" class="notes-page-textarea" placeholder="Écrivez vos notes ici..."></textarea>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1663,7 +1711,6 @@ let links = [];
 let categoryOrder = [];
 let notesList = [];
 let activeNoteId = null;
-let notesActive = false;
 let notesSaveTimer = null;
 let sessions = [];
 let sessionsActive = false;
@@ -1881,18 +1928,16 @@ function createCard(link, opts) {
 
 const content = document.getElementById('content');
 const sidebar = document.getElementById('sidebar');
-const notesPanel = document.getElementById('notes-panel');
-const notesPanelHeader = document.getElementById('notes-panel-header');
-const notesListView = document.getElementById('notes-list-view');
+const notesScreen = document.getElementById('notes-screen');
+const notesBackBtn = document.getElementById('notes-back-btn');
 const notesListEl = document.getElementById('notes-list');
 const notesNewBtn = document.getElementById('notes-new-btn');
-const notesDetailView = document.getElementById('notes-detail-view');
-const notesDetailBackBtn = document.getElementById('notes-detail-back-btn');
+const notesEditorEmpty = document.getElementById('notes-editor-empty');
+const notesEditorFields = document.getElementById('notes-editor-fields');
 const notesDetailTitleInput = document.getElementById('notes-detail-title');
 const notesDetailDeleteBtn = document.getElementById('notes-detail-delete-btn');
 const notesTextarea = document.getElementById('notes-textarea');
 const notesSaveStatus = document.getElementById('notes-save-status');
-const notesCloseBtn = document.getElementById('notes-close-btn');
 const sessionsPanel = document.getElementById('sessions-panel');
 const sessionsPanelHeader = document.getElementById('sessions-panel-header');
 const sessionsCloseBtn = document.getElementById('sessions-close-btn');
@@ -1929,13 +1974,16 @@ const eventCancelBtn = document.getElementById('event-cancel-btn');
 const agendaSearchInput = document.getElementById('agenda-search-input');
 const agendaSearchResults = document.getElementById('agenda-search-results');
 
-function setNotesActive(active) {
-  notesActive = active;
-  notesPanel.classList.toggle('open', active);
-  const notesBtn = sidebar.querySelector('.sidebar-item-notes');
-  if (notesBtn) notesBtn.classList.toggle('active', active);
-  if (active) showNotesListView();
+function openNotesScreen() {
+  dashboardScreen.style.display = 'none';
+  notesScreen.style.display = 'block';
+  renderNotesList();
 }
+function closeNotesScreen() {
+  notesScreen.style.display = 'none';
+  dashboardScreen.style.display = 'block';
+}
+notesBackBtn.addEventListener('click', closeNotesScreen);
 
 function setSessionsActive(active) {
   sessionsActive = active;
@@ -2024,7 +2072,6 @@ function makeFloatingPanel(panel, header, closeBtn, onClose, storageKey) {
   }).observe(panel);
 }
 
-makeFloatingPanel(notesPanel, notesPanelHeader, notesCloseBtn, () => setNotesActive(false), 'notes');
 makeFloatingPanel(sessionsPanel, sessionsPanelHeader, sessionsCloseBtn, () => setSessionsActive(false), 'sessions');
 
 agendaBackBtn.addEventListener('click', closeAgendaScreen);
@@ -2049,7 +2096,7 @@ function renderNotesList() {
   }
   notesList.forEach(n => {
     const item = document.createElement('div');
-    item.className = 'notes-list-item';
+    item.className = 'notes-list-item' + (n.id === activeNoteId ? ' active' : '');
 
     const body = document.createElement('div');
     body.className = 'notes-list-item-body';
@@ -2072,54 +2119,51 @@ function renderNotesList() {
       e.stopPropagation();
       notesList = notesList.filter(x => x.id !== n.id);
       saveLinks(links);
-      renderNotesList();
+      selectNote(n.id === activeNoteId ? (notesList[0] ? notesList[0].id : null) : activeNoteId);
     });
     item.appendChild(delBtn);
 
-    item.addEventListener('click', () => openNoteDetail(n.id));
+    item.addEventListener('click', () => selectNote(n.id));
     notesListEl.appendChild(item);
   });
 }
 
-function showNotesListView() {
-  activeNoteId = null;
-  notesDetailView.style.display = 'none';
-  notesListView.style.display = 'flex';
-  renderNotesList();
-}
-
-function openNoteDetail(id) {
-  const note = notesList.find(n => n.id === id);
-  if (!note) return;
+function selectNote(id) {
   activeNoteId = id;
-  notesDetailTitleInput.value = note.title || '';
-  notesTextarea.value = note.content || '';
-  notesListView.style.display = 'none';
-  notesDetailView.style.display = 'flex';
-  notesTextarea.focus();
+  const note = notesList.find(n => n.id === id);
+  if (!note) {
+    notesEditorEmpty.style.display = 'flex';
+    notesEditorFields.style.display = 'none';
+  } else {
+    notesEditorEmpty.style.display = 'none';
+    notesEditorFields.style.display = 'flex';
+    notesDetailTitleInput.value = note.title || '';
+    notesTextarea.value = note.content || '';
+  }
+  renderNotesList();
 }
 
 notesNewBtn.addEventListener('click', () => {
   const note = { id: uid(), title: 'Nouvelle note', content: '' };
   notesList.unshift(note);
   saveLinks(links);
-  openNoteDetail(note.id);
+  selectNote(note.id);
+  notesDetailTitleInput.focus();
   notesDetailTitleInput.select();
 });
-
-notesDetailBackBtn.addEventListener('click', showNotesListView);
 
 notesDetailDeleteBtn.addEventListener('click', () => {
   if (!activeNoteId) return;
   notesList = notesList.filter(n => n.id !== activeNoteId);
   saveLinks(links);
-  showNotesListView();
+  selectNote(notesList[0] ? notesList[0].id : null);
 });
 
 notesDetailTitleInput.addEventListener('input', () => {
   const note = notesList.find(n => n.id === activeNoteId);
   if (!note) return;
   note.title = notesDetailTitleInput.value;
+  renderNotesList();
   scheduleNotesSave();
 });
 
@@ -2127,6 +2171,7 @@ notesTextarea.addEventListener('input', () => {
   const note = notesList.find(n => n.id === activeNoteId);
   if (!note) return;
   note.content = notesTextarea.value;
+  renderNotesList();
   scheduleNotesSave();
 });
 
@@ -2958,11 +3003,11 @@ function render() {
 
   const notesBtn = document.createElement('button');
   notesBtn.type = 'button';
-  notesBtn.className = 'sidebar-item sidebar-item-notes' + (notesActive ? ' active' : '');
+  notesBtn.className = 'sidebar-item sidebar-item-notes';
   const notesLabel = document.createElement('span');
   notesLabel.textContent = '📝 Bloc-notes';
   notesBtn.appendChild(notesLabel);
-  notesBtn.addEventListener('click', () => setNotesActive(!notesActive));
+  notesBtn.addEventListener('click', openNotesScreen);
   sidebar.appendChild(notesBtn);
 
   const agendaLocked = !isPaidPlan();
@@ -3505,10 +3550,13 @@ onAuthStateChanged(auth, (user) => {
           if (activeNote) {
             notesDetailTitleInput.value = activeNote.title || '';
             notesTextarea.value = activeNote.content || '';
+          } else {
+            activeNoteId = null;
+            notesEditorEmpty.style.display = 'flex';
+            notesEditorFields.style.display = 'none';
           }
-        } else {
-          renderNotesList();
         }
+        renderNotesList();
       }
       sessions = data.sessions || [];
       events = data.events || [];
@@ -3532,9 +3580,11 @@ onAuthStateChanged(auth, (user) => {
     activeNoteId = null;
     currentPlan = 'free';
     updatePlanUI();
-    notesActive = false;
-    notesPanel.classList.remove('open');
+    notesScreen.style.display = 'none';
+    notesEditorEmpty.style.display = 'flex';
+    notesEditorFields.style.display = 'none';
     notesTextarea.value = '';
+    notesDetailTitleInput.value = '';
     sessions = [];
     sessionsActive = false;
     activeSessionId = null;
