@@ -1108,10 +1108,10 @@ document.querySelectorAll('#billing-toggle button').forEach(function(btn) {
 // une par prix (Pro mensuel/annuel, Illimite mensuel/annuel). Tant qu'une
 // valeur est vide, le bouton correspondant reste desactive ("Bientot disponible").
 const PAYMENT_LINKS = {
-  pro_monthly: '',
-  pro_annual: '',
-  unlimited_monthly: '',
-  unlimited_annual: ''
+  pro_monthly: 'https://buy.stripe.com/test_9B6aEX8V9af6bHpfQCf7i03',
+  pro_annual: 'https://buy.stripe.com/test_cNi9AT8V99b2aDl47Uf7i02',
+  unlimited_monthly: 'https://buy.stripe.com/test_28E28rfjx0Ew4eXgUGf7i01',
+  unlimited_annual: 'https://buy.stripe.com/test_9B65kDgnB3QIfXF1ZMf7i00'
 };
 
 const checkoutParams = new URLSearchParams(window.location.search);

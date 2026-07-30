@@ -32,10 +32,10 @@ const db = getFirestore();
 // A completer avec les Price ID Stripe reels (Stripe > Produits > cliquer sur un prix,
 // l'identifiant commence par "price_"). Un Payment Link correspond a un seul prix.
 const PRICE_TO_PLAN: Record<string, string> = {
-  "price_REMPLACER_PRO_MENSUEL": "pro",
-  "price_REMPLACER_PRO_ANNUEL": "pro",
-  "price_REMPLACER_ILLIMITE_MENSUEL": "unlimited",
-  "price_REMPLACER_ILLIMITE_ANNUEL": "unlimited",
+  "price_1TytTUF7y5BccxXlmPBZgWx3": "pro",       // Pro mensuel, 2,99€
+  "price_1TytVHF7y5BccxXlqWXX54tJ": "pro",       // Pro annuel, 29,90€
+  "price_1TytX8F7y5BccxXl0657bgvE": "unlimited", // Illimite mensuel, 7,99€
+  "price_1TytXlF7y5BccxXlfwBGAGBs": "unlimited", // Illimite annuel, 79,90€
 };
 
 Deno.serve(async (req) => {
