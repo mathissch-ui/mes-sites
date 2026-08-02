@@ -627,11 +627,13 @@
     font-weight: 500;
   }
   .main-content { flex: 1; min-width: 0; }
+  .mobile-tabbar { display: none; }
 
-  /* Navigation mobile : la sidebar devient une barre d'onglets fixee en bas */
+  /* Navigation mobile : la sidebar (et la barre d'onglets des pages pleine ecran) devient une barre fixee en bas */
   @media (max-width: 860px) {
     .app-body { gap: 0; }
-    .sidebar {
+    .sidebar, .mobile-tabbar {
+      display: flex;
       position: fixed;
       left: 0;
       right: 0;
@@ -1510,6 +1512,7 @@
         </div>
       </div>
     </div>
+    <nav class="mobile-tabbar" id="notes-mobile-tabbar"></nav>
   </div>
 
   <div id="agenda-screen">
@@ -1550,6 +1553,7 @@
         </div>
       </div>
     </div>
+    <nav class="mobile-tabbar" id="agenda-mobile-tabbar"></nav>
   </div>
 
   <div id="stats-screen">
@@ -1583,6 +1587,7 @@
         <div id="stats-breakdown-body"></div>
       </div>
     </div>
+    <nav class="mobile-tabbar" id="stats-mobile-tabbar"></nav>
   </div>
 
   <div class="modal-overlay" id="event-modal-overlay">
@@ -2005,6 +2010,9 @@ function createCard(link, opts) {
 
 const content = document.getElementById('content');
 const sidebar = document.getElementById('sidebar');
+const notesMobileTabbar = document.getElementById('notes-mobile-tabbar');
+const agendaMobileTabbar = document.getElementById('agenda-mobile-tabbar');
+const statsMobileTabbar = document.getElementById('stats-mobile-tabbar');
 const notesScreen = document.getElementById('notes-screen');
 const notesBackBtn = document.getElementById('notes-back-btn');
 const notesListEl = document.getElementById('notes-list');
@@ -2028,6 +2036,7 @@ const timerStopBtn = document.getElementById('timer-stop-btn');
 const searchInput = document.getElementById('search');
 
 const agendaScreen = document.getElementById('agenda-screen');
+const statsScreen = document.getElementById('stats-screen');
 const agendaBackBtn = document.getElementById('agenda-back-btn');
 const agendaTodayBtn = document.getElementById('agenda-today-btn');
 const agendaWeekPrevBtn = document.getElementById('agenda-week-prev');
@@ -2051,8 +2060,15 @@ const eventCancelBtn = document.getElementById('event-cancel-btn');
 const agendaSearchInput = document.getElementById('agenda-search-input');
 const agendaSearchResults = document.getElementById('agenda-search-results');
 
-function openNotesScreen() {
+function hideAllScreens() {
   dashboardScreen.style.display = 'none';
+  notesScreen.style.display = 'none';
+  agendaScreen.style.display = 'none';
+  statsScreen.style.display = 'none';
+}
+
+function openNotesScreen() {
+  hideAllScreens();
   notesScreen.style.display = 'block';
   renderNotesList();
 }
@@ -2065,8 +2081,7 @@ notesBackBtn.addEventListener('click', closeNotesScreen);
 function setSessionsActive(active) {
   sessionsActive = active;
   sessionsPanel.classList.toggle('open', active);
-  const sessionsBtn = sidebar.querySelector('.sidebar-item-sessions');
-  if (sessionsBtn) sessionsBtn.classList.toggle('active', active);
+  document.querySelectorAll('.sidebar-item-sessions').forEach(btn => btn.classList.toggle('active', active));
 }
 
 const lockedFeatureOverlay = document.getElementById('locked-feature-overlay');
@@ -2086,7 +2101,7 @@ lockedFeatureOverlay.addEventListener('click', (e) => {
 });
 
 function openAgendaScreen() {
-  dashboardScreen.style.display = 'none';
+  hideAllScreens();
   agendaScreen.style.display = 'block';
   renderAgendaAll();
   requestAnimationFrame(() => {
@@ -2597,12 +2612,12 @@ function renderStatsAll() {
 }
 
 function openStatsScreen() {
-  dashboardScreen.style.display = 'none';
-  document.getElementById('stats-screen').style.display = 'block';
+  hideAllScreens();
+  statsScreen.style.display = 'block';
   renderStatsAll();
 }
 function closeStatsScreen() {
-  document.getElementById('stats-screen').style.display = 'none';
+  statsScreen.style.display = 'none';
   dashboardScreen.style.display = 'block';
 }
 document.getElementById('stats-back-btn').addEventListener('click', closeStatsScreen);
@@ -3073,12 +3088,10 @@ document.addEventListener('click', (e) => {
   }
 });
 
-function render() {
-  content.innerHTML = '';
-  sidebar.innerHTML = '';
-  updateBulkBar();
+function populateNavBar(container) {
+  container.innerHTML = '';
 
-  function addSidebarIconLabel(btn, icon, text) {
+  function addIconLabel(btn, icon, text) {
     const iconEl = document.createElement('span');
     iconEl.className = 'sidebar-item-icon';
     iconEl.textContent = icon;
@@ -3092,15 +3105,15 @@ function render() {
   const notesBtn = document.createElement('button');
   notesBtn.type = 'button';
   notesBtn.className = 'sidebar-item sidebar-item-notes';
-  addSidebarIconLabel(notesBtn, '📝', 'Bloc-notes');
+  addIconLabel(notesBtn, '📝', 'Bloc-notes');
   notesBtn.addEventListener('click', openNotesScreen);
-  sidebar.appendChild(notesBtn);
+  container.appendChild(notesBtn);
 
   const agendaLocked = !isPaidPlan();
   const agendaBtn = document.createElement('button');
   agendaBtn.type = 'button';
   agendaBtn.className = 'sidebar-item sidebar-item-agenda' + (agendaLocked ? ' locked' : '');
-  addSidebarIconLabel(agendaBtn, '🗓️', 'Agenda');
+  addIconLabel(agendaBtn, '🗓️', 'Agenda');
   if (agendaLocked) {
     const agendaBadge = document.createElement('span');
     agendaBadge.className = 'sidebar-pro-badge';
@@ -3111,13 +3124,13 @@ function render() {
     if (agendaLocked) openLockedModal('Agenda');
     else openAgendaScreen();
   });
-  sidebar.appendChild(agendaBtn);
+  container.appendChild(agendaBtn);
 
   const sessionsLocked = !isPaidPlan();
   const sessionsBtn = document.createElement('button');
   sessionsBtn.type = 'button';
   sessionsBtn.className = 'sidebar-item sidebar-item-sessions' + (sessionsActive ? ' active' : '') + (sessionsLocked ? ' locked' : '');
-  addSidebarIconLabel(sessionsBtn, '⏱️', 'Sessions');
+  addIconLabel(sessionsBtn, '⏱️', 'Sessions');
   if (sessionsLocked) {
     const sessionsBadge = document.createElement('span');
     sessionsBadge.className = 'sidebar-pro-badge';
@@ -3125,16 +3138,22 @@ function render() {
     sessionsBtn.appendChild(sessionsBadge);
   }
   sessionsBtn.addEventListener('click', () => {
-    if (sessionsLocked) openLockedModal('Sessions de travail');
-    else setSessionsActive(!sessionsActive);
+    if (sessionsLocked) { openLockedModal('Sessions de travail'); return; }
+    if (dashboardScreen.style.display !== 'none') {
+      setSessionsActive(!sessionsActive);
+    } else {
+      hideAllScreens();
+      dashboardScreen.style.display = 'block';
+      setSessionsActive(true);
+    }
   });
-  sidebar.appendChild(sessionsBtn);
+  container.appendChild(sessionsBtn);
 
   const statsLocked = !isPaidPlan();
   const statsBtn = document.createElement('button');
   statsBtn.type = 'button';
   statsBtn.className = 'sidebar-item sidebar-item-stats' + (statsLocked ? ' locked' : '');
-  addSidebarIconLabel(statsBtn, '📊', 'Stats');
+  addIconLabel(statsBtn, '📊', 'Stats');
   if (statsLocked) {
     const statsBadge = document.createElement('span');
     statsBadge.className = 'sidebar-pro-badge';
@@ -3145,7 +3164,14 @@ function render() {
     if (statsLocked) openLockedModal('Stats');
     else openStatsScreen();
   });
-  sidebar.appendChild(statsBtn);
+  container.appendChild(statsBtn);
+}
+
+function render() {
+  content.innerHTML = '';
+  updateBulkBar();
+
+  [sidebar, notesMobileTabbar, agendaMobileTabbar, statsMobileTabbar].forEach(populateNavBar);
 
   const term = searchTerm.trim().toLowerCase();
   const filtered = links.filter(l => l.name.toLowerCase().includes(term) || l.url.toLowerCase().includes(term));
@@ -3678,7 +3704,7 @@ onAuthStateChanged(auth, (user) => {
     timeLog = [];
     events = [];
     agendaScreen.style.display = 'none';
-    document.getElementById('stats-screen').style.display = 'none';
+    statsScreen.style.display = 'none';
     authMode = 'login';
     updateAuthUI();
     authForm.reset();
