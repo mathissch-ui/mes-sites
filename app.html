@@ -1392,7 +1392,7 @@
   <div id="dashboard-screen">
     <div class="wrap">
       <header>
-        <a href="index.html" style="text-decoration:none;color:inherit;"><h1><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+        <a href="#" id="dashboard-logo-link" style="text-decoration:none;color:inherit;"><h1><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
           <rect x="2" y="2" width="9" height="9" rx="2.5" fill="currentColor"/>
           <rect x="13" y="2" width="9" height="9" rx="2.5" fill="var(--accent)"/>
           <rect x="2" y="13" width="9" height="9" rx="2.5" fill="currentColor"/>
@@ -3061,6 +3061,15 @@ selectModeBtn.addEventListener('click', () => {
   selectModeBtn.textContent = selectMode ? 'Annuler la sélection' : 'Sélectionner';
   updateBulkBar();
   render();
+});
+
+document.getElementById('dashboard-logo-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  exitSelectMode();
+  searchTerm = '';
+  searchInput.value = '';
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 document.getElementById('bulk-cancel-btn').addEventListener('click', exitSelectMode);
