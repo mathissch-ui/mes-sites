@@ -278,6 +278,16 @@
   }
   .accent-swatch.selected { border-color: var(--text); }
 
+  .event-color-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .event-color-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    padding: 0;
+  }
+  .event-color-swatch.selected { border-color: var(--text); box-shadow: 0 0 0 2px var(--bg-card); }
+
   .category {
     margin-bottom: 36px;
   }
@@ -1615,6 +1625,10 @@
             <input type="time" id="event-end" required>
           </div>
         </div>
+        <div class="field">
+          <label>Couleur</label>
+          <div class="event-color-swatches" id="event-color-swatches"></div>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn-ghost" id="event-delete-btn" style="display:none; color: var(--danger); margin-right:auto;">Supprimer</button>
           <button type="button" class="btn-ghost" id="event-cancel-btn">Annuler</button>
@@ -2057,8 +2071,38 @@ const eventStartInput = document.getElementById('event-start');
 const eventEndInput = document.getElementById('event-end');
 const eventDeleteBtn = document.getElementById('event-delete-btn');
 const eventCancelBtn = document.getElementById('event-cancel-btn');
+const eventColorSwatchesEl = document.getElementById('event-color-swatches');
 const agendaSearchInput = document.getElementById('agenda-search-input');
 const agendaSearchResults = document.getElementById('agenda-search-results');
+
+const EVENT_COLORS = [
+  { name: 'Bleu', value: '#5b8cff' },
+  { name: 'Violet', value: '#a78bfa' },
+  { name: 'Vert', value: '#34d399' },
+  { name: 'Orange', value: '#fb923c' },
+  { name: 'Rose', value: '#f472b6' },
+  { name: 'Rouge', value: '#f87171' },
+  { name: 'Jaune', value: '#fbbf24' },
+  { name: 'Cyan', value: '#22d3ee' },
+  { name: 'Gris', value: '#9ca3af' }
+];
+let selectedEventColor = EVENT_COLORS[0].value;
+
+function buildEventColorSwatches() {
+  eventColorSwatchesEl.innerHTML = '';
+  EVENT_COLORS.forEach(color => {
+    const swatch = document.createElement('button');
+    swatch.type = 'button';
+    swatch.className = 'event-color-swatch' + (color.value === selectedEventColor ? ' selected' : '');
+    swatch.style.background = color.value;
+    swatch.title = color.name;
+    swatch.addEventListener('click', () => {
+      selectedEventColor = color.value;
+      buildEventColorSwatches();
+    });
+    eventColorSwatchesEl.appendChild(swatch);
+  });
+}
 
 function hideAllScreens() {
   dashboardScreen.style.display = 'none';
@@ -2782,6 +2826,7 @@ function renderAgendaWeek() {
       block.dataset.eventId = ev.id;
       block.style.top = (startMin / 60 * AGENDA_HOUR_HEIGHT) + 'px';
       block.style.height = ((endMin - startMin) / 60 * AGENDA_HOUR_HEIGHT - 2) + 'px';
+      block.style.background = ev.color || 'var(--accent)';
       block.innerHTML = '<b>' + escapeHtml(ev.title) + '</b>' + (ev.startTime || '') + (ev.endTime ? '–' + ev.endTime : '');
       block.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -2816,6 +2861,7 @@ function openEventModal(event, prefillIso, prefillHour) {
     eventStartInput.value = event.startTime || '09:00';
     eventEndInput.value = event.endTime || '10:00';
     eventDeleteBtn.style.display = '';
+    selectedEventColor = event.color || EVENT_COLORS[0].value;
   } else {
     eventModalTitle.textContent = 'Nouvel événement';
     eventIdInput.value = '';
@@ -2826,7 +2872,9 @@ function openEventModal(event, prefillIso, prefillHour) {
     eventStartInput.value = pad2(h) + ':00';
     eventEndInput.value = pad2(Math.min(23, h + 1)) + ':00';
     eventDeleteBtn.style.display = 'none';
+    selectedEventColor = EVENT_COLORS[0].value;
   }
+  buildEventColorSwatches();
   eventModalOverlay.classList.add('open');
   eventTitleInput.focus();
 }
@@ -2842,7 +2890,8 @@ eventForm.addEventListener('submit', (e) => {
     title: eventTitleInput.value.trim(),
     date: eventDateInput.value,
     startTime: eventStartInput.value,
-    endTime: eventEndInput.value
+    endTime: eventEndInput.value,
+    color: selectedEventColor
   };
   if (!payload.title || !payload.date || !payload.startTime || !payload.endTime) return;
   if (id) {
