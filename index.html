@@ -440,6 +440,8 @@
   .price-annual { display: none; }
   .pricing-grid.annual .price-monthly { display: none; }
   .pricing-grid.annual .price-annual { display: inline; }
+  .price-annual-note { display: none; font-size: 12px; font-weight: 600; color: var(--accent); margin: -2px 0 4px; }
+  .pricing-grid.annual .price-annual-note { display: block; }
   .price-period {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
@@ -962,32 +964,36 @@
       <p>Passez à un forfait payant quand vous en avez besoin, résiliable à tout moment.</p>
     </div>
     <div class="billing-toggle" id="billing-toggle">
-      <button type="button" class="active" data-billing="monthly">Mensuel</button>
-      <button type="button" data-billing="annual">Annuel <span class="billing-save">2 mois offerts</span></button>
+      <button type="button" data-billing="monthly">Mensuel</button>
+      <button type="button" class="active" data-billing="annual">Annuel <span class="billing-save">2 mois offerts</span></button>
     </div>
-    <div class="pricing-grid" id="pricing-grid">
+    <div class="pricing-grid annual" id="pricing-grid">
       <div class="price-card">
         <h3>Gratuit</h3>
         <div class="price-amount">0€</div>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Jusqu'à 10 liens</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Jusqu'à 3 catégories</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Bloc-notes et sessions de travail</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Synchronisation multi-appareils</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Bloc-notes (plusieurs notes)</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Export / import et synchronisation multi-appareils</li>
         </ul>
         <a href="app.html" class="btn btn-ghost">Commencer gratuitement</a>
       </div>
       <div class="price-card featured">
-        <span class="price-badge">Bientôt disponible</span>
+        <span class="price-badge">★ Le plus choisi</span>
         <h3>Pro</h3>
         <div class="price-amount">
           <span class="price-monthly">2,99€<span class="price-period"> / mois</span></span>
           <span class="price-annual">29,90€<span class="price-period"> / an</span></span>
         </div>
+        <div class="price-annual-note">soit 2,49€/mois — 2 mois offerts</div>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Jusqu'à 35 liens</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Jusqu'à 10 catégories</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Export / import en un clic, pour ne jamais rien perdre</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Agenda complet, avec événements en couleur</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Sessions de travail (minuteur + tâches)</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Statistiques d'activité détaillées</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Couleur d'accent personnalisée</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Réponse du support sous 48h</li>
         </ul>
         <button type="button" id="pro-checkout-btn" class="btn btn-primary" disabled style="opacity:0.5;cursor:default;">Bientôt disponible</button>
@@ -998,9 +1004,11 @@
           <span class="price-monthly">7,99€<span class="price-period"> / mois</span></span>
           <span class="price-annual">79,90€<span class="price-period"> / an</span></span>
         </div>
+        <div class="price-annual-note">soit 6,66€/mois — 2 mois offerts</div>
         <ul>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Liens illimités, sans compromis</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Catégories illimitées</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Liens et catégories illimités</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Agenda, Sessions de travail et Stats inclus</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Couleur d'accent personnalisée</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Accès anticipé aux nouvelles fonctionnalités</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Support prioritaire, réponse sous 24h</li>
         </ul>
