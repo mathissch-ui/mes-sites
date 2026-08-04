@@ -1719,46 +1719,22 @@
   </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth, onAuthStateChanged, signInWithEmailAndPassword,
-  createUserWithEmailAndPassword, signOut, sendPasswordResetEmail,
-  GoogleAuthProvider, signInWithPopup, deleteUser
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore, doc, onSnapshot, setDoc, deleteDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAkm8WKpCB4Fvz4icI0udOBlS9cfl9E2Y4",
-  authDomain: "mes-site-9cceb.firebaseapp.com",
-  projectId: "mes-site-9cceb",
-  storageBucket: "mes-site-9cceb.firebasestorage.app",
-  messagingSenderId: "926895264412",
-  appId: "1:926895264412:web:b5862079d78c2df9b0d359"
-};
+const supabase = createClient(
+  "https://hqmcuyillegvtnkaljmh.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhxbWN1eWlsbGVndnRua2Fsam1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk4MjYsImV4cCI6MjEwMTQyNTgyNn0.eEgp5JyqjbDTuLVUPOURWYt3jhYvB7yWlFBo1CCtXWE"
+);
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider();
-
-// Emails auto-provisionnés en accès admin (illimité) a leur toute première connexion.
-// Une fois le champ "plan" présent sur leur document Firestore, cette liste n'est plus
-// consultée pour eux : pour révoquer/transférer l'admin, modifier directement le champ
-// "plan" du document (collection "links", id = uid du compte) dans la console Firebase.
-const ADMIN_EMAILS = [
-  'mathis.schwob@gmail.com',
-  'cg.patricia.m@gmail.com',
-  'smartech.reparation33@gmail.com',
-  'lobbydallas74@gmail.com',
-  'maena.girardet@gmail.com'
-];
+// L'auto-provisioning admin (emails -> forfait "admin" a la creation du compte) est
+// gere cote serveur par un trigger SQL (voir supabase/migrations/0001_init.sql) :
+// pour revoquer/transferer l'admin, modifier directement la table "user_data" dans
+// le tableau de bord Supabase, plus besoin de toucher au code.
 
 const PLAN_LABELS = { free: 'Gratuit', pro: 'Pro', unlimited: 'Illimité', admin: 'Admin' };
 
 let currentUser = null;
-let unsubscribeSnapshot = null;
+let dataChannel = null;
 let currentPlan = 'free';
 
 function updatePlanUI() {
@@ -1828,8 +1804,15 @@ let deadLinkIds = new Set();
 
 function saveLinks(linksToSave) {
   if (!currentUser) return;
-  setDoc(doc(db, 'links', currentUser.uid), { items: linksToSave, categoryOrder, notesList, sessions, events, timeLog, plan: currentPlan }).catch(err => {
-    alert('Erreur de sauvegarde : ' + err.message);
+  supabase.from('user_data').update({
+    items: linksToSave,
+    category_order: categoryOrder,
+    notes_list: notesList,
+    sessions,
+    events,
+    time_log: timeLog
+  }).eq('user_id', currentUser.id).then(({ error }) => {
+    if (error) alert('Erreur de sauvegarde : ' + error.message);
   });
 }
 
@@ -3583,17 +3566,13 @@ let authMode = 'login';
 
 function friendlyAuthError(code) {
   const map = {
-    'auth/invalid-email': 'Adresse email invalide.',
-    'auth/missing-password': 'Mot de passe requis.',
-    'auth/weak-password': 'Le mot de passe doit contenir au moins 6 caractères.',
-    'auth/email-already-in-use': 'Un compte existe déjà avec cet email.',
-    'auth/invalid-credential': 'Email ou mot de passe incorrect.',
-    'auth/user-not-found': 'Aucun compte avec cet email.',
-    'auth/wrong-password': 'Mot de passe incorrect.',
-    'auth/too-many-requests': 'Trop de tentatives, réessayez plus tard.',
-    'auth/popup-closed-by-user': 'Connexion annulée.',
-    'auth/cancelled-popup-request': 'Connexion annulée.',
-    'auth/unauthorized-domain': "Ce domaine n'est pas autorisé dans Firebase (Authentication > Settings > Authorized domains)."
+    'invalid_credentials': 'Email ou mot de passe incorrect.',
+    'user_already_exists': 'Un compte existe déjà avec cet email.',
+    'weak_password': 'Le mot de passe doit contenir au moins 6 caractères.',
+    'email_not_confirmed': "Confirmez d'abord votre email (lien envoyé à l'inscription).",
+    'over_email_send_rate_limit': "Trop d'emails envoyés, réessayez plus tard.",
+    'over_request_rate_limit': 'Trop de tentatives, réessayez plus tard.',
+    'validation_failed': 'Adresse email invalide.'
   };
   return map[code] || ('Une erreur est survenue (' + code + ').');
 }
@@ -3631,11 +3610,13 @@ togglePasswordBtn.addEventListener('click', () => {
 
 document.getElementById('google-signin-btn').addEventListener('click', async () => {
   authError.textContent = '';
-  try {
-    await signInWithPopup(auth, googleProvider);
-  } catch (err) {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) {
     authError.style.color = 'var(--danger)';
-    authError.textContent = friendlyAuthError(err.code);
+    authError.textContent = friendlyAuthError(error.code);
   }
 });
 
@@ -3647,13 +3628,13 @@ authForgotLink.addEventListener('click', async (e) => {
     authError.textContent = "Entrez votre email d'abord.";
     return;
   }
-  try {
-    await sendPasswordResetEmail(auth, email);
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  if (error) {
+    authError.style.color = 'var(--danger)';
+    authError.textContent = friendlyAuthError(error.code);
+  } else {
     authError.style.color = 'var(--text-dim)';
     authError.textContent = 'Email de réinitialisation envoyé.';
-  } catch (err) {
-    authError.style.color = 'var(--danger)';
-    authError.textContent = friendlyAuthError(err.code);
   }
 });
 
@@ -3663,26 +3644,76 @@ authForm.addEventListener('submit', async (e) => {
   const password = authPasswordInput.value;
   authError.textContent = '';
   authSubmitBtn.disabled = true;
-  try {
-    if (authMode === 'login') {
-      await signInWithEmailAndPassword(auth, email, password);
-    } else {
-      await createUserWithEmailAndPassword(auth, email, password);
-    }
-  } catch (err) {
+  const { error } = authMode === 'login'
+    ? await supabase.auth.signInWithPassword({ email, password })
+    : await supabase.auth.signUp({ email, password });
+  if (error) {
     authError.style.color = 'var(--danger)';
-    authError.textContent = friendlyAuthError(err.code);
-  } finally {
-    authSubmitBtn.disabled = false;
+    authError.textContent = friendlyAuthError(error.code);
   }
+  authSubmitBtn.disabled = false;
 });
 
-onAuthStateChanged(auth, (user) => {
-  currentUser = user;
-  if (unsubscribeSnapshot) {
-    unsubscribeSnapshot();
-    unsubscribeSnapshot = null;
+let lastLoadedUserId = null;
+
+async function loadUserData(user) {
+  const { data: row, error } = await supabase.from('user_data').select('*').eq('user_id', user.id).single();
+  if (error) {
+    alert('Erreur de synchronisation : ' + error.message);
+    return;
   }
+  applyUserDataRow(row);
+
+  dataChannel = supabase
+    .channel('user_data_' + user.id)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'user_data', filter: 'user_id=eq.' + user.id },
+      (payload) => applyUserDataRow(payload.new))
+    .subscribe();
+}
+
+function applyUserDataRow(row) {
+  links = row.items || [];
+  categoryOrder = row.category_order || [];
+  notesList = row.notes_list || [];
+  if (document.activeElement !== notesTextarea && document.activeElement !== notesDetailTitleInput) {
+    if (activeNoteId) {
+      const activeNote = notesList.find(n => n.id === activeNoteId);
+      if (activeNote) {
+        notesDetailTitleInput.value = activeNote.title || '';
+        notesTextarea.value = activeNote.content || '';
+      } else {
+        activeNoteId = null;
+        notesEditorEmpty.style.display = 'flex';
+        notesEditorFields.style.display = 'none';
+      }
+    }
+    renderNotesList();
+  }
+  sessions = row.sessions || [];
+  events = row.events || [];
+  timeLog = row.time_log || [];
+  currentPlan = row.plan || 'free';
+  updatePlanUI();
+
+  renderSessions();
+  renderAgendaAll();
+  render();
+}
+
+supabase.auth.onAuthStateChange((event, session) => {
+  const user = session ? session.user : null;
+  currentUser = user;
+
+  if (user && user.id === lastLoadedUserId) {
+    // Meme utilisateur (ex: rafraichissement de jeton) : rien a refaire.
+    return;
+  }
+
+  if (dataChannel) {
+    supabase.removeChannel(dataChannel);
+    dataChannel = null;
+  }
+  lastLoadedUserId = user ? user.id : null;
 
   if (user) {
     authScreen.style.display = 'none';
@@ -3691,52 +3722,12 @@ onAuthStateChanged(auth, (user) => {
     accountAvatar.textContent = initial;
     accountAvatarLg.textContent = initial;
     accountEmail.textContent = user.email;
-    const providerId = user.providerData[0] && user.providerData[0].providerId;
-    accountProvider.textContent = providerId === 'google.com' ? 'Connecté via Google' : 'Connecté via email';
-    const pricingUrl = 'index.html?uid=' + encodeURIComponent(user.uid) + '&email=' + encodeURIComponent(user.email) + '#pricing';
+    accountProvider.textContent = user.app_metadata.provider === 'google' ? 'Connecté via Google' : 'Connecté via email';
+    const pricingUrl = 'index.html?uid=' + encodeURIComponent(user.id) + '&email=' + encodeURIComponent(user.email) + '#pricing';
     document.getElementById('account-plan-link').href = pricingUrl;
     document.getElementById('locked-feature-upgrade-btn').href = pricingUrl;
 
-    unsubscribeSnapshot = onSnapshot(doc(db, 'links', user.uid), (snap) => {
-      const data = snap.exists() ? snap.data() : {};
-      links = data.items || [];
-      categoryOrder = data.categoryOrder || [];
-      if (data.notesList) {
-        notesList = data.notesList;
-      } else if (data.notes) {
-        notesList = [{ id: uid(), title: 'Note', content: data.notes }];
-      } else {
-        notesList = [];
-      }
-      if (document.activeElement !== notesTextarea && document.activeElement !== notesDetailTitleInput) {
-        if (activeNoteId) {
-          const activeNote = notesList.find(n => n.id === activeNoteId);
-          if (activeNote) {
-            notesDetailTitleInput.value = activeNote.title || '';
-            notesTextarea.value = activeNote.content || '';
-          } else {
-            activeNoteId = null;
-            notesEditorEmpty.style.display = 'flex';
-            notesEditorFields.style.display = 'none';
-          }
-        }
-        renderNotesList();
-      }
-      sessions = data.sessions || [];
-      events = data.events || [];
-      timeLog = data.timeLog || [];
-
-      const hadPlan = !!data.plan;
-      currentPlan = data.plan || (ADMIN_EMAILS.includes(user.email) ? 'admin' : 'free');
-      updatePlanUI();
-      if (!hadPlan) saveLinks(links);
-
-      renderSessions();
-      renderAgendaAll();
-      render();
-    }, (err) => {
-      alert('Erreur de synchronisation : ' + err.message);
-    });
+    loadUserData(user);
   } else {
     links = [];
     categoryOrder = [];
@@ -3857,16 +3848,16 @@ document.addEventListener('click', (e) => {
 });
 document.getElementById('logout-btn').addEventListener('click', () => {
   accountDropdown.classList.remove('open');
-  signOut(auth);
+  supabase.auth.signOut();
 });
 document.getElementById('reset-password-btn').addEventListener('click', async () => {
   if (!currentUser) return;
   accountDropdown.classList.remove('open');
-  try {
-    await sendPasswordResetEmail(auth, currentUser.email);
+  const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email);
+  if (error) {
+    alert(friendlyAuthError(error.code));
+  } else {
     alert('Un email de réinitialisation a été envoyé à ' + currentUser.email);
-  } catch (err) {
-    alert(friendlyAuthError(err.code));
   }
 });
 
@@ -3890,15 +3881,12 @@ document.getElementById('delete-account-confirm-btn').addEventListener('click', 
   if (!currentUser) return;
   deleteAccountError.textContent = '';
   try {
-    await deleteDoc(doc(db, 'links', currentUser.uid));
-    await deleteUser(currentUser);
+    const { error } = await supabase.functions.invoke('delete-account');
+    if (error) throw error;
     deleteAccountOverlay.classList.remove('open');
+    await supabase.auth.signOut();
   } catch (err) {
-    if (err.code === 'auth/requires-recent-login') {
-      deleteAccountError.textContent = 'Par sécurité, déconnectez-vous puis reconnectez-vous avant de réessayer.';
-    } else {
-      deleteAccountError.textContent = friendlyAuthError(err.code);
-    }
+    deleteAccountError.textContent = 'Une erreur est survenue. Réessayez ou contactez le support.';
   }
 });
 </script>

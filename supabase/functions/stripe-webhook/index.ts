@@ -1,4 +1,4 @@
-// Webhook Stripe -> active le plan Firestore correspondant après un paiement reussi.
+// Webhook Stripe -> active le forfait Supabase correspondant après un paiement reussi.
 //
 // Deploiement (depuis un terminal, apres avoir installe et connecte la CLI Supabase) :
 //   supabase functions deploy stripe-webhook --no-verify-jwt
@@ -6,16 +6,14 @@
 // Secrets a definir AVANT le deploiement (jamais dans ce fichier ni dans le chat) :
 //   supabase secrets set STRIPE_SECRET_KEY=sk_live_...
 //   supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
-//   supabase secrets set FIREBASE_SERVICE_ACCOUNT='{"type":"service_account", ...}'
-//     (le JSON complet telecharge depuis Firebase > Parametres du projet >
-//      Comptes de service > Generer une nouvelle cle privee)
+// (SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont fournis automatiquement a toute
+// Edge Function par la plateforme, rien a definir pour ceux-la.)
 //
 // Puis dans Stripe > Developpeurs > Webhooks : ajouter une destination pointant
 // vers l'URL de cette fonction, ecoutant l'evenement "checkout.session.completed".
 
 import Stripe from "npm:stripe@14";
-import { cert, getApps, initializeApp } from "npm:firebase-admin@12/app";
-import { getFirestore } from "npm:firebase-admin@12/firestore";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2023-10-16",
@@ -23,11 +21,10 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 
 const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
 
-const serviceAccount = JSON.parse(Deno.env.get("FIREBASE_SERVICE_ACCOUNT")!);
-if (!getApps().length) {
-  initializeApp({ credential: cert(serviceAccount) });
-}
-const db = getFirestore();
+const supabaseAdmin = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
 
 // A completer avec les Price ID Stripe reels (Stripe > Produits > cliquer sur un prix,
 // l'identifiant commence par "price_"). Un Payment Link correspond a un seul prix.
@@ -68,7 +65,11 @@ Deno.serve(async (req) => {
       return new Response("OK (price inconnu)", { status: 200 });
     }
 
-    await db.collection("links").doc(uid).set({ plan }, { merge: true });
+    const { error } = await supabaseAdmin.from("user_data").update({ plan }).eq("user_id", uid);
+    if (error) {
+      console.error(`Echec de l'activation du plan "${plan}" pour ${uid} :`, error.message);
+      return new Response("Erreur base de donnees", { status: 500 });
+    }
     console.log(`Plan "${plan}" active pour l'utilisateur ${uid}`);
   }
 
