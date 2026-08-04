@@ -1664,6 +1664,23 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="new-password-overlay">
+    <div class="modal">
+      <h2>Nouveau mot de passe</h2>
+      <p style="color: var(--text-dim); font-size: 14px; margin: 0 0 14px;">Choisissez un nouveau mot de passe pour votre compte.</p>
+      <form id="new-password-form">
+        <div class="field">
+          <label for="new-password-input">Nouveau mot de passe</label>
+          <input type="password" id="new-password-input" required minlength="6" placeholder="••••••••">
+        </div>
+        <p id="new-password-error" style="color: var(--danger); font-size: 13px; margin: 0 0 8px;"></p>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" id="new-password-submit-btn">Enregistrer le mot de passe</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="locked-feature-overlay">
     <div class="modal event-modal">
       <div class="event-modal-icon">🔒</div>
@@ -3628,7 +3645,9 @@ authForgotLink.addEventListener('click', async (e) => {
     authError.textContent = "Entrez votre email d'abord.";
     return;
   }
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
   if (error) {
     authError.style.color = 'var(--danger)';
     authError.textContent = friendlyAuthError(error.code);
@@ -3703,6 +3722,11 @@ function applyUserDataRow(row) {
 supabase.auth.onAuthStateChange((event, session) => {
   const user = session ? session.user : null;
   currentUser = user;
+
+  if (event === 'PASSWORD_RECOVERY') {
+    newPasswordError.textContent = '';
+    newPasswordOverlay.classList.add('open');
+  }
 
   if (user && user.id === lastLoadedUserId) {
     // Meme utilisateur (ex: rafraichissement de jeton) : rien a refaire.
@@ -3853,7 +3877,9 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 document.getElementById('reset-password-btn').addEventListener('click', async () => {
   if (!currentUser) return;
   accountDropdown.classList.remove('open');
-  const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email);
+  const { error } = await supabase.auth.resetPasswordForEmail(currentUser.email, {
+    redirectTo: window.location.origin + window.location.pathname
+  });
   if (error) {
     alert(friendlyAuthError(error.code));
   } else {
@@ -3865,6 +3891,25 @@ document.getElementById('reset-password-btn').addEventListener('click', async ()
 
 const deleteAccountOverlay = document.getElementById('delete-account-overlay');
 const deleteAccountError = document.getElementById('delete-account-error');
+
+const newPasswordOverlay = document.getElementById('new-password-overlay');
+const newPasswordError = document.getElementById('new-password-error');
+const newPasswordInput = document.getElementById('new-password-input');
+const newPasswordSubmitBtn = document.getElementById('new-password-submit-btn');
+
+document.getElementById('new-password-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  newPasswordError.textContent = '';
+  newPasswordSubmitBtn.disabled = true;
+  const { error } = await supabase.auth.updateUser({ password: newPasswordInput.value });
+  newPasswordSubmitBtn.disabled = false;
+  if (error) {
+    newPasswordError.textContent = friendlyAuthError(error.code);
+    return;
+  }
+  newPasswordInput.value = '';
+  newPasswordOverlay.classList.remove('open');
+});
 
 document.getElementById('delete-account-btn').addEventListener('click', () => {
   accountDropdown.classList.remove('open');
